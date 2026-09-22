@@ -792,7 +792,45 @@ export default function App() {
     a.href = URL.createObjectURL(blob);
     a.download = `EnglishGradingBackup_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
-    showToast('تم تنزيل نسخة احتياطية من البيانات', 'success');
+    showToast('تم تنزيل نسخة احتياطية من ملف قاعدة البيانات (database.json)', 'success');
+  };
+
+  const handleRestoreDatabaseBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+        if (parsed && (parsed.classesData || parsed.globalSettings)) {
+          masterDbRef.current = parsed;
+          const g = parsed.globalSettings;
+          if (g) {
+            if (g.adminSchool) setAdminSchool(g.adminSchool);
+            if (g.teacher) setTeacher(g.teacher);
+            if (g.subject) setSubject(g.subject);
+            if (g.year) setAcademicYear(g.year);
+            if (g.pageSize) setPageSize(g.pageSize);
+            if (g.customClasses) setCustomClasses(g.customClasses);
+            const targetTerm = g.lastTerm || term;
+            const targetClass = g.lastClass || currentClass;
+            setTerm(targetTerm);
+            setCurrentClass(targetClass);
+            loadClassData(targetTerm, targetClass, g.pageSize || pageSize);
+          }
+          await saveMasterDatabase();
+          showToast('✓ تم استعادة النسخة الاحتياطية بنجاح وتحديث كافة الكشوف والصفوف!', 'success');
+        } else {
+          showToast('ملف النسخة الاحتياطية غير صالح أو غير متطابق.', 'error');
+        }
+      } catch (err: any) {
+        showToast('تعذر قراءة ملف النسخة الاحتياطية: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   const handleTriggerPrint = () => {
@@ -861,6 +899,7 @@ export default function App() {
         onForceSaveToFolder={handleForceSaveToFolder}
         onOpenAppFolder={handleOpenAppFolder}
         onCreateDatabaseBackup={handleCreateDatabaseBackup}
+        onRestoreDatabaseBackup={handleRestoreDatabaseBackup}
         onTriggerPrint={handleTriggerPrint}
         onExitApplication={handleExitApplication}
         onAdjustZoom={handleAdjustZoom}

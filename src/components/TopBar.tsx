@@ -11,6 +11,7 @@ interface TopBarProps {
   onForceSaveToFolder: () => void;
   onOpenAppFolder: () => void;
   onCreateDatabaseBackup: () => void;
+  onRestoreDatabaseBackup: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onTriggerPrint: () => void;
   onExitApplication: () => void;
   onAdjustZoom: (amount: number) => void;
@@ -29,6 +30,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onForceSaveToFolder,
   onOpenAppFolder,
   onCreateDatabaseBackup,
+  onRestoreDatabaseBackup,
   onTriggerPrint,
   onExitApplication,
   onAdjustZoom,
@@ -36,6 +38,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   hiddenUI,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backupInputRef = useRef<HTMLInputElement>(null);
 
   const month1Label = term === 'الاول' ? 'شهر أكتوبر' : 'شهر مارس';
   const month2Label = term === 'الاول' ? 'شهر نوفمبر' : 'شهر أبريل';
@@ -118,9 +121,25 @@ export const TopBar: React.FC<TopBarProps> = ({
           className="btn-action"
           style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
           onClick={onCreateDatabaseBackup}
-          title="إنشاء نسخة احتياطية من البيانات"
+          title="إنشاء وتنزيل نسخة احتياطية من ملف قاعدة البيانات (database.json)"
         >
           📦 نسخة احتياطية
+        </button>
+        <input
+          type="file"
+          ref={backupInputRef}
+          style={{ display: 'none' }}
+          accept=".json"
+          onChange={onRestoreDatabaseBackup}
+        />
+        <button
+          type="button"
+          className="btn-action"
+          style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}
+          onClick={() => backupInputRef.current?.click()}
+          title="استعادة ملف قاعدة بيانات سابق (database.json أو Backup)"
+        >
+          ♻️ استعادة نسخة
         </button>
         <button
           type="button"
