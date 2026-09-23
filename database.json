@@ -1,0 +1,13 @@
+{
+  "globalSettings": {
+    "adminSchool": "إدارة شرق كفر الشيخ التعليمية - مدرسة الشهيد نجيب محي الشناوي للتعليم الأساسي بدقميرة",
+    "teacher": "مازن فوزي محمد على بدوي",
+    "subject": "لغة انجليزية",
+    "year": "2026-2027",
+    "pageSize": 25,
+    "lastTerm": "الاول",
+    "lastClass": "اول 1",
+    "customClasses": []
+  },
+  "classesData": {}
+}
