@@ -413,8 +413,7 @@
 
     /* Absence Input & Cell Styling */
     .absence-cell {
-      background-color: #fff1f2 !important;
-      border: 1.5px solid #fecdd3 !important;
+      border: 1.5px solid #bae6fd !important;
     }
     .absence-input {
       width: 100%;
@@ -431,14 +430,49 @@
       border-radius: 3px;
     }
     .absence-header-group {
-      background: linear-gradient(135deg, #ffe4e6, #fecdd3) !important;
-      color: #9f1239 !important;
-      border-color: #fca5a5 !important;
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd) !important;
+      color: #0369a1 !important;
+      border-color: #7dd3fc !important;
       font-weight: 800 !important;
     }
     .absence-date-header {
-      background-color: #fff1f2 !important;
-      border-color: #fca5a5 !important;
+      background-color: #e0f2fe !important;
+      border-color: #bae6fd !important;
+    }
+
+    /* Orange background ONLY for absence columns that have no date assigned */
+    th.absence-date-header.col-no-date {
+      background-color: #ffedd5 !important;
+      border-color: #fdba74 !important;
+      color: #9a3412 !important;
+    }
+    td.absence-cell.col-no-date {
+      background-color: #fff7ed !important;
+      border-color: #fed7aa !important;
+    }
+    th.absence-date-header.col-no-date .btn-pick-date {
+      background: #ffedd5;
+      border-color: #ea580c;
+      color: #c2410c;
+      font-weight: bold;
+    }
+    th.absence-date-header.col-no-date .btn-pick-date:hover {
+      background: #ea580c;
+      color: #ffffff;
+    }
+
+    /* Columns WITH a date assigned: NOT orange (clean light blue & white) */
+    th.absence-date-header.col-has-date {
+      background-color: #e0f2fe !important;
+      border-color: #bae6fd !important;
+      color: #0369a1 !important;
+    }
+    td.absence-cell.col-has-date {
+      background-color: #ffffff !important;
+      border-color: #bae6fd !important;
+    }
+    tr:nth-child(even) td.absence-cell.col-has-date {
+      background-color: #f8fafc !important;
     }
 
     /* Print Sheet Header */
@@ -657,24 +691,37 @@
         font-weight: 700 !important;
       }
       .absence-header-group {
-        background-color: #ffe4e6 !important;
+        background-color: #e0f2fe !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        color: #9f1239 !important;
-        border-color: #fca5a5 !important;
+        color: #0369a1 !important;
+        border-color: #0284c7 !important;
       }
-      .absence-date-header {
-        background-color: #fff1f2 !important;
+      .absence-date-header.col-no-date {
+        background-color: #ffedd5 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        color: #9f1239 !important;
-        border-color: #fca5a5 !important;
+        color: #9a3412 !important;
+        border-color: #fed7aa !important;
       }
-      .absence-cell {
-        background-color: #fff1f2 !important;
+      .absence-date-header.col-has-date {
+        background-color: #bae6fd !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        border-color: #fca5a5 !important;
+        color: #0369a1 !important;
+        border-color: #0284c7 !important;
+      }
+      .absence-cell.col-no-date {
+        background-color: #fff7ed !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        border-color: #fed7aa !important;
+      }
+      .absence-cell.col-has-date {
+        background-color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        border-color: #0284c7 !important;
       }
       .absence-input {
         background-color: transparent !important;
@@ -818,20 +865,40 @@
       const month = now.getMonth() + 1; // 1 to 12
       let startYear;
       let term;
+      let defaultTab = 1;
 
-      if (month >= 7) {
+      if (month >= 7 && month <= 10) {
         startYear = year;
         term = "الاول";
-      } else if (month === 1) {
-        startYear = year - 1;
+        defaultTab = 1; // شهر أكتوبر
+      } else if (month === 11) {
+        startYear = year;
         term = "الاول";
-      } else {
+        defaultTab = 2; // شهر نوفمبر (مع إمكانية عرض أكتوبر السابق)
+      } else if (month === 12 || month === 1) {
+        startYear = (month === 1) ? year - 1 : year;
+        term = "الاول";
+        defaultTab = 2; // نهاية الفصل الأول (نوفمبر مع عرض السابق)
+      } else if (month === 2 || month === 3) {
         startYear = year - 1;
         term = "الثاني";
+        defaultTab = 1; // شهر مارس
+      } else {
+        // 4, 5, 6
+        startYear = year - 1;
+        term = "الثاني";
+        defaultTab = 2; // شهر أبريل (مع إمكانية عرض مارس السابق)
       }
 
       const academicYear = startYear + "-" + (startYear + 1);
-      return { term: term, academicYear: academicYear, startYear: startYear, nextYear: startYear + 1 };
+      return {
+        term: term,
+        academicYear: academicYear,
+        startYear: startYear,
+        nextYear: startYear + 1,
+        defaultTab: defaultTab,
+        currentMonth: month
+      };
     }
 
     const sysInit = getSystemTermAndYear();
@@ -845,7 +912,7 @@
       currentClass: 'اول 1',
       customClasses: [],
       pageSize: 25,
-      activeTab: 0,
+      activeTab: sysInit.defaultTab,
       isEditModeUnlocked: true,
       hiddenUI: false,
       zoom: 1,
@@ -899,13 +966,28 @@
       const startYear = parseInt(normalizeArabicDigits(yearStr).split('-')[0]) || new Date().getFullYear();
       const nextYear = startYear + 1;
       if (term === "الاول") {
-        if (tabIndex === 1) return { min: startYear + "-10-01", max: startYear + "-10-31" };
-        if (tabIndex === 2) return { min: startYear + "-11-01", max: startYear + "-11-30" };
+        if (tabIndex === 1) return { min: startYear + "-09-01", max: startYear + "-10-31" };
+        if (tabIndex === 2) return { min: startYear + "-11-01", max: startYear + "-12-31" };
       } else {
-        if (tabIndex === 1) return { min: nextYear + "-03-01", max: nextYear + "-03-31" };
-        if (tabIndex === 2) return { min: nextYear + "-04-01", max: nextYear + "-04-30" };
+        if (tabIndex === 1) return { min: nextYear + "-02-01", max: nextYear + "-03-31" };
+        if (tabIndex === 2) return { min: nextYear + "-04-01", max: nextYear + "-05-31" };
       }
       return { min: "", max: "" };
+    }
+
+    // لا يسمح باختيار يوم قبل التاريخ في العمود السابق له
+    function getMinDateForColumn(dates, colIdx, fallbackMin) {
+      let minDate = fallbackMin || "";
+      for (let i = colIdx - 1; i >= 0; i--) {
+        if (dates[i] && dates[i].trim() !== '') {
+          const prev = dates[i].trim();
+          if (!minDate || prev > minDate) {
+            minDate = prev;
+          }
+          break;
+        }
+      }
+      return minDate;
     }
 
     function calculateAttendanceScore(studentName, absenceMarks, activeDaysCount, hasAnyScore) {
@@ -1558,8 +1640,9 @@
 
           let absenceTds = '';
           for (let aIdx = 0; aIdx < 12; aIdx++) {
+            const hasDate = Boolean(dates[aIdx] && dates[aIdx].trim() !== '');
             absenceTds += `
-              <td class="absence-cell">
+              <td class="absence-cell ${hasDate ? 'col-has-date' : 'col-no-date'}">
                 <input
                   type="text"
                   class="absence-input"
@@ -1644,6 +1727,8 @@
         let dateHeadersHtml = '';
         for (let colIdx = 0; colIdx < 12; colIdx++) {
           const dateVal = dates[colIdx] || '';
+          const hasDate = Boolean(dateVal && dateVal.trim() !== '');
+          const colMinDate = getMinDateForColumn(dates, colIdx, dateLimits.min);
           let displayDate = '';
           if (dateVal) {
             const parts = dateVal.split('-');
@@ -1655,14 +1740,14 @@
             : `<span class="date-display-text" onclick="triggerDatePicker(${tabIndex}, ${colIdx})" title="انقر لتعديل التاريخ">${displayDate}</span>`;
 
           dateHeadersHtml += `
-            <th class="absence-date-header" style="width: 3%">
+            <th class="absence-date-header ${hasDate ? 'col-has-date' : 'col-no-date'}" style="width: 3%">
               <div class="date-picker-wrapper" data-col="${colIdx}">
                 ${buttonOrText}
                 <input
                   type="date"
                   id="date-picker-${tabIndex}-${colIdx}"
                   class="absence-date-picker"
-                  min="${dateLimits.min}"
+                  min="${colMinDate}"
                   max="${dateLimits.max}"
                   value="${dateVal}"
                   style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;"
@@ -1939,8 +2024,27 @@
     }
 
     function handleDateChange(tabIndex, colIdx, dateVal) {
+      const dates = tabIndex === 1 ? state.tab1Dates : state.tab2Dates;
+      const dateLimits = getDateLimitsForTab(state.term, state.year, tabIndex);
+      const colMinDate = getMinDateForColumn(dates, colIdx, dateLimits.min);
+
+      if (dateVal && colMinDate && dateVal < colMinDate) {
+        showToast(`تنبيه: لا يمكن اختيار تاريخ (${dateVal}) يسبق تاريخ اليوم السابق له (${colMinDate})`, 'warning');
+        renderAppView();
+        return;
+      }
+
       if (tabIndex === 1) state.tab1Dates[colIdx] = dateVal;
       else state.tab2Dates[colIdx] = dateVal;
+
+      // إذا تم تعديل تاريخ وأصبح تاريخ أي عمود لاحق يسبقه، يتم تفريغه للحفاظ على التسلسل
+      if (dateVal) {
+        for (let nextCol = colIdx + 1; nextCol < 12; nextCol++) {
+          if (dates[nextCol] && dates[nextCol] < dateVal) {
+            dates[nextCol] = '';
+          }
+        }
+      }
 
       scheduleAutoSave();
       renderAppView();
@@ -2616,8 +2720,7 @@
               state.term = initTerm;
               state.currentClass = initClass;
               loadClassData(initTerm, initClass, g.pageSize || 25);
-              updateTopBarLabels();
-              renderAppView();
+              switchTab(sysInit.defaultTab);
               showToast('تم الاتصال بمجلد البرنامج بنجاح! يتم الحفظ تلقائياً في ملف database.json', 'success');
               return;
             }
@@ -2629,8 +2732,7 @@
 
       state.isFolderServerMode = false;
       loadClassData(sysInit.term, 'اول 1', 25);
-      updateTopBarLabels();
-      renderAppView();
+      switchTab(sysInit.defaultTab);
     }
 
     // Launch application on DOM ready
