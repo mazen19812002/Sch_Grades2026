@@ -975,19 +975,32 @@
       return { min: "", max: "" };
     }
 
-    // لا يسمح باختيار يوم قبل التاريخ في العمود السابق له
-    function getMinDateForColumn(dates, colIdx, fallbackMin) {
-      let minDate = fallbackMin || "";
+    // أول الأيام (العمود 0) مفتوح لاختيار أي يوم حتى ولو قبل اليوم الحالي
+    // أما باقي الأعمدة فلا يسمح باختيار يوم قبل التاريخ المحدد في العمود السابق له
+    function getMinDateForColumn(dates, colIdx) {
+      if (colIdx === 0) {
+        return ""; // مفتوح تماماً للعمود الأول لاختيار أي يوم
+      }
       for (let i = colIdx - 1; i >= 0; i--) {
         if (dates[i] && dates[i].trim() !== '') {
-          const prev = dates[i].trim();
-          if (!minDate || prev > minDate) {
-            minDate = prev;
-          }
-          break;
+          return dates[i].trim();
         }
       }
-      return minDate;
+      return "";
+    }
+
+    // التحقق من أيام العطلات الأسبوعية الرسمية (الجمعة والسبت)
+    function isWeekendDay(dateStr) {
+      if (!dateStr || typeof dateStr !== 'string') return false;
+      const parts = dateStr.trim().split('-');
+      if (parts.length !== 3) return false;
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      if (isNaN(y) || isNaN(m) || isNaN(d)) return false;
+      const dt = new Date(y, m, d);
+      const day = dt.getDay();
+      return day === 5 || day === 6; // 5 = الجمعة, 6 = السبت
     }
 
     function calculateAttendanceScore(studentName, absenceMarks, activeDaysCount, hasAnyScore) {
@@ -1728,7 +1741,7 @@
         for (let colIdx = 0; colIdx < 12; colIdx++) {
           const dateVal = dates[colIdx] || '';
           const hasDate = Boolean(dateVal && dateVal.trim() !== '');
-          const colMinDate = getMinDateForColumn(dates, colIdx, dateLimits.min);
+          const colMinDate = getMinDateForColumn(dates, colIdx);
           let displayDate = '';
           if (dateVal) {
             const parts = dateVal.split('-');
@@ -1747,7 +1760,7 @@
                   type="date"
                   id="date-picker-${tabIndex}-${colIdx}"
                   class="absence-date-picker"
-                  min="${colMinDate}"
+                  ${colMinDate ? `min="${colMinDate}"` : ''}
                   max="${dateLimits.max}"
                   value="${dateVal}"
                   style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;"
@@ -2025,13 +2038,28 @@
 
     function handleDateChange(tabIndex, colIdx, dateVal) {
       const dates = tabIndex === 1 ? state.tab1Dates : state.tab2Dates;
-      const dateLimits = getDateLimitsForTab(state.term, state.year, tabIndex);
-      const colMinDate = getMinDateForColumn(dates, colIdx, dateLimits.min);
 
-      if (dateVal && colMinDate && dateVal < colMinDate) {
-        showToast(`تنبيه: لا يمكن اختيار تاريخ (${dateVal}) يسبق تاريخ اليوم السابق له (${colMinDate})`, 'warning');
-        renderAppView();
-        return;
+      if (dateVal) {
+        // 1. لا تسمح باختيار أيام العطلات الأسبوعية (الجمعة والسبت)
+        if (isWeekendDay(dateVal)) {
+          const parts = dateVal.split('-');
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          const dayName = d.getDay() === 5 ? 'الجمعة' : 'السبت';
+          showToast(`عذراً: يوم ${dayName} (${dateVal}) عطلة أسبوعية رسمية ولا يمكن اختياره كيوم دراسي.`, 'warning');
+          renderAppView();
+          return;
+        }
+
+        // 2. أول الأيام (العمود الأول) مفتوح لاختيار أي يوم حتى ولو قبل اليوم الحالي
+        // أما باقي الأعمدة فلا تسمح باختيار يوم قبل تاريخ اليوم في العمود السابق له
+        if (colIdx > 0) {
+          const colMinDate = getMinDateForColumn(dates, colIdx);
+          if (colMinDate && dateVal < colMinDate) {
+            showToast(`تنبيه: لا يمكن اختيار تاريخ (${dateVal}) يسبق تاريخ اليوم السابق له (${colMinDate})`, 'warning');
+            renderAppView();
+            return;
+          }
+        }
       }
 
       if (tabIndex === 1) state.tab1Dates[colIdx] = dateVal;
@@ -2246,8 +2274,16 @@
               state.currentClass = targetClass;
               loadClassData(targetTerm, targetClass, g.pageSize || state.pageSize);
             }
+            if (parsed.classesData) {
+              Object.keys(parsed.classesData).forEach(k => {
+                try {
+                  localStorage.setItem(k, JSON.stringify(parsed.classesData[k]));
+                } catch (e) {}
+              });
+            }
             await saveMasterDatabase();
             updateTopBarLabels();
+            syncPrintHeaders();
             renderAppView();
             showToast('✓ تم استعادة النسخة الاحتياطية بنجاح وتحديث كافة الكشوف والصفوف!', 'success');
           } else {
@@ -2425,6 +2461,13 @@
       const activeDays1 = state.tab1Dates.filter(d => d && d.trim() !== '').length;
       const activeDays2 = state.tab2Dates.filter(d => d && d.trim() !== '').length;
 
+      // صفوف البيانات الوصفية (Metadata) لضمان تسجيل بيانات الهيدر واسترجاعها
+      const makeMetaRows = (sheetTitle) => [
+        ['الإدارة والمدرسة:', state.adminSchool, '', 'المعلم:', state.teacher, '', 'المادة:', state.subject],
+        ['العام الدراسي:', state.year, '', 'الفصل الدراسي:', state.term, '', 'الفصل:', state.currentClass, '', 'النموذج:', sheetTitle, '', 'عدد الطلاب:', state.pageSize * 2],
+        []
+      ];
+
       // Tab 0 Data
       const tab0Headers = [
         'م',
@@ -2439,7 +2482,7 @@
         'الدرجة الأصلية للمادة',
         'ملاحظات',
       ];
-      const tab0Data = [tab0Headers];
+      const tab0StudentRows = [];
 
       for (let i = 0; i < maxRows; i++) {
         const r0 = state.tab0Rows[i] || { name: '', notes: '' };
@@ -2448,7 +2491,7 @@
 
         const studentName = r0.name || r1.name || r2.name || '';
         if (!studentName && !r0.notes && (!r1.absence || r1.absence.every(a => !a)) && (!r2.absence || r2.absence.every(a => !a))) {
-          tab0Data.push([i + 1, '', '', '', '', '', '', '', '', '', '']);
+          tab0StudentRows.push([i + 1, '', '', '', '', '', '', '', '', '', '']);
           continue;
         }
 
@@ -2495,7 +2538,7 @@
           grandTotal = formatCleanScore(Math.min(70, Math.max(0, sum)));
         }
 
-        tab0Data.push([
+        tab0StudentRows.push([
           i + 1,
           studentName,
           exam1 !== null ? formatCleanScore(exam1) : '',
@@ -2510,8 +2553,10 @@
         ]);
       }
 
+      const tab0Data = [...makeMetaRows('النموذج الأول (المجمل)'), tab0Headers, ...tab0StudentRows];
+
       // Monthly Data Generator
-      const generateMonthData = (rows, dates, activeDays) => {
+      const generateMonthData = (rows, dates, activeDays, sheetTitle) => {
         const headers = [
           'م',
           'اسم الطالب',
@@ -2523,7 +2568,7 @@
           'مجموع التقييم (20)',
           'اختبار الشهر (15)',
         ];
-        const data = [headers];
+        const studentRows = [];
         for (let i = 0; i < maxRows; i++) {
           const r = rows[i] || { name: '', absence: [], hw: [], ass: [], exam: '' };
           const sName = r.name || '';
@@ -2537,7 +2582,7 @@
           const totalHw = calculateHomeworkTotal(hw);
           const totalAss = calculateAssessmentTotal(ass);
 
-          data.push([
+          studentRows.push([
             i + 1,
             sName,
             ...absences,
@@ -2549,11 +2594,11 @@
             exam,
           ]);
         }
-        return data;
+        return [...makeMetaRows(sheetTitle), headers, ...studentRows];
       };
 
-      const month1Data = generateMonthData(state.tab1Rows, state.tab1Dates, activeDays1);
-      const month2Data = generateMonthData(state.tab2Rows, state.tab2Dates, activeDays2);
+      const month1Data = generateMonthData(state.tab1Rows, state.tab1Dates, activeDays1, month1Name);
+      const month2Data = generateMonthData(state.tab2Rows, state.tab2Dates, activeDays2, month2Name);
 
       // Check if SheetJS XLSX is available
       if (typeof XLSX !== 'undefined') {
@@ -2626,27 +2671,59 @@
             const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             if (!json || json.length === 0) return;
 
+            // 1. استخراج بيانات الهيدر من الصفوف العلوية إن وُجدت
+            for (let r = 0; r < Math.min(5, json.length); r++) {
+              const row = json[r] || [];
+              for (let c = 0; c < row.length; c++) {
+                const cellText = String(row[c] || '').trim();
+                const nextVal = row[c + 1] !== undefined ? String(row[c + 1]).trim() : '';
+                if ((cellText.includes('المدرسة') || cellText.includes('الإدارة')) && nextVal) state.adminSchool = nextVal;
+                if (cellText.includes('المعلم') && nextVal) state.teacher = nextVal;
+                if (cellText.includes('المادة') && nextVal) state.subject = nextVal;
+                if (cellText.includes('العام الدراسي') && nextVal) state.year = nextVal;
+                if (cellText.includes('الفصل الدراسي') && nextVal) state.term = nextVal;
+                if (cellText.includes('الفصل:') && nextVal) state.currentClass = nextVal;
+              }
+            }
+
+            // 2. البحث عن صف ترويسة الجدول الرئيسي (الذي يبدأ بـ "م" أو يحتوي على "اسم الطالب")
+            let headerRowIdx = 0;
+            for (let r = 0; r < Math.min(10, json.length); r++) {
+              const row = json[r] || [];
+              if (row[0] === 'م' || String(row[1] || '').includes('اسم الطالب')) {
+                headerRowIdx = r;
+                break;
+              }
+            }
+
             if (sIdx === 0) {
               const rows = [];
-              for (let i = 1; i < json.length; i++) {
+              for (let i = headerRowIdx + 1; i < json.length; i++) {
                 const r = json[i] || [];
+                if (!r || r.length === 0) continue;
                 rows.push({
                   name: r[1] ? String(r[1]).trim() : '',
                   notes: r[10] ? String(r[10]).trim() : '',
                 });
               }
-              state.tab0Rows = rows;
+              if (rows.length > 0) state.tab0Rows = rows;
             } else if (sIdx === 1 || sIdx === 2) {
-              const headerRow = json[0] || [];
+              const headerRow = json[headerRowIdx] || [];
               const dates = [];
               for (let c = 0; c < 12; c++) {
                 const dVal = headerRow[c + 2];
-                dates.push(dVal ? String(dVal).trim() : '');
+                let cleanDate = '';
+                if (dVal !== undefined && dVal !== null) {
+                  const s = String(dVal).trim();
+                  if (!s.startsWith('يوم')) cleanDate = s;
+                }
+                dates.push(cleanDate);
               }
 
               const rows = [];
-              for (let i = 1; i < json.length; i++) {
+              for (let i = headerRowIdx + 1; i < json.length; i++) {
                 const r = json[i] || [];
+                if (!r || r.length === 0) continue;
                 const absence = [];
                 for (let a = 0; a < 12; a++) {
                   const val = r[a + 2];
@@ -2676,18 +2753,29 @@
               }
 
               if (sIdx === 1) {
-                state.tab1Dates = dates;
-                state.tab1Rows = rows;
+                if (dates.some(d => d)) state.tab1Dates = dates;
+                if (rows.length > 0) state.tab1Rows = rows;
               } else {
-                state.tab2Dates = dates;
-                state.tab2Rows = rows;
+                if (dates.some(d => d)) state.tab2Dates = dates;
+                if (rows.length > 0) state.tab2Rows = rows;
               }
             }
           });
 
+          // 3. توحيد أسماء الطلاب بين كافة النماذج
+          const maxCount = Math.max(state.tab0Rows.length, state.tab1Rows.length, state.tab2Rows.length);
+          for (let i = 0; i < maxCount; i++) {
+            const name = state.tab0Rows[i]?.name || state.tab1Rows[i]?.name || state.tab2Rows[i]?.name || '';
+            if (state.tab0Rows[i]) state.tab0Rows[i].name = name;
+            if (state.tab1Rows[i]) state.tab1Rows[i].name = name;
+            if (state.tab2Rows[i]) state.tab2Rows[i].name = name;
+          }
+
+          updateTopBarLabels();
+          syncPrintHeaders();
           scheduleAutoSave();
           renderAppView();
-          showToast('تم استيراد كافة البيانات بنجاح واستعادتها كاملة!', 'success');
+          showToast('تم استيراد كافة بيانات الهيدر والدرجات والكشوف بنجاح واستعادتها كاملة!', 'success');
         } catch (err) {
           showToast('حدث خطأ أثناء قراءة ملف الإكسل: ' + err.message, 'error');
         }
