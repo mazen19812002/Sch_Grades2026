@@ -261,6 +261,26 @@
       background: #ffffff;
       box-shadow: 0 0 6px rgba(2, 132, 199, 0.35);
     }
+    .btn-action-del-class {
+      background: #fee2e2;
+      border: 1.5px solid #f87171;
+      color: #dc2626;
+      border-radius: 6px;
+      padding: 4px 7px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .btn-action-del-class:hover {
+      background: #fecaca;
+      border-color: #ef4444;
+      transform: scale(1.05);
+    }
 
     /* Print Page Controls Bar */
     .print-controls-bar {
@@ -584,6 +604,166 @@
       display: inline-flex !important;
     }
 
+    /* Class Attendance Days Checkboxes */
+    .class-attendance-days-row {
+      background: #f0f9ff;
+      border: 1px dashed #0284c7;
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-top: 3px;
+    }
+    .attendance-days-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      width: 100%;
+    }
+    .attendance-days-heading {
+      font-size: 12px;
+      font-weight: 800;
+      color: #0369a1;
+      white-space: nowrap;
+    }
+    .attendance-days-checkboxes {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .class-day-check-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      cursor: pointer;
+      background: #ffffff;
+      border: 1px solid #bae6fd;
+      padding: 3px 8px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .class-day-check-item:hover {
+      background: #e0f2fe;
+      border-color: #0284c7;
+    }
+    .class-day-check-item input[type="checkbox"] {
+      accent-color: #0284c7;
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+    .attendance-days-hint {
+      font-size: 11px;
+      color: #64748b;
+      margin-right: auto;
+    }
+
+    /* Custom Attendance Datepicker Modal */
+    .custom-datepicker-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: fadeIn 0.2s ease;
+    }
+    .custom-datepicker-card {
+      background: #ffffff;
+      border: 2px solid #0284c7;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      width: 100%;
+      max-width: 620px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      direction: rtl;
+    }
+    .custom-datepicker-header {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .custom-datepicker-body {
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .custom-datepicker-grid {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .datepicker-day-col {
+      flex: 1;
+      min-width: 95px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .datepicker-day-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0369a1;
+      text-align: center;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #bae6fd;
+    }
+    .datepicker-date-btn {
+      background: #ffffff;
+      border: 1.5px solid #0284c7;
+      color: #0f172a;
+      padding: 6px 4px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .datepicker-date-btn:hover:not(:disabled) {
+      background: #e0f2fe;
+      border-color: #0369a1;
+      transform: translateY(-1px);
+    }
+    .datepicker-date-btn.active-selected {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0369a1;
+      font-weight: 900;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4);
+    }
+    .datepicker-date-btn:disabled {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .custom-datepicker-footer {
+      padding: 10px 16px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     /* Print CSS - Strict A4 Single Page Containment */
     @media print {
       @page {
@@ -599,7 +779,7 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      .top-bar, .floating-toggle, footer, .action-row-top, .print-controls-bar, #toast-container, .btn-pick-date, .sheet-header {
+      .top-bar, .floating-toggle, footer, .action-row-top, .print-controls-bar, #toast-container, .btn-pick-date, .sheet-header, #custom-datepicker-modal {
         display: none !important;
       }
       .main-wrapper {
@@ -793,6 +973,30 @@
   <!-- Toast Notifications Container -->
   <div id="toast-container"></div>
 
+  <!-- Custom Class Attendance Datepicker Modal -->
+  <div id="custom-datepicker-modal" class="custom-datepicker-overlay" style="display: none;" onclick="closeCustomDatePicker(event)">
+    <div class="custom-datepicker-card" onclick="event.stopPropagation()">
+      <div class="custom-datepicker-header">
+        <div>
+          <h3 id="cdp-title" style="margin: 0; font-size: 15px; font-weight: 800;">اختيار التاريخ</h3>
+          <div id="cdp-subtitle" style="font-size: 11px; opacity: 0.9; margin-top: 2px;"></div>
+        </div>
+        <button type="button" id="cdp-close-btn" onclick="closeCustomDatePicker()" style="background: transparent; border: none; color: white; font-size: 18px; cursor: pointer; padding: 2px 6px;">✕</button>
+      </div>
+      <div class="custom-datepicker-body">
+        <div id="cdp-grid" class="custom-datepicker-grid"></div>
+      </div>
+      <div class="custom-datepicker-footer">
+        <button type="button" id="cdp-clear-btn" class="btn-action btn-clear" style="padding: 4px 10px; font-size: 12px; background: #fee2e2; color: #dc2626; border-color: #fca5a5;" onclick="clearCustomPickerDate()">
+          🗑️ مسح تاريخ هذا اليوم
+        </button>
+        <button type="button" class="btn-action" style="padding: 4px 14px; font-size: 12px; background: #e2e8f0; color: #334155;" onclick="closeCustomDatePicker()">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Top Bar Navigation & Actions -->
   <header class="top-bar" id="topBar">
     <div class="tabs-container">
@@ -919,6 +1123,8 @@
       term: sysInit.term,
       currentClass: 'اول 1',
       customClasses: [],
+      deletedClasses: [],
+      classAttendanceDays: {},
       pageSize: 25,
       activeTab: 0,
       isEditModeUnlocked: true,
@@ -941,6 +1147,8 @@
           lastTerm: sysInit.term,
           lastClass: 'اول 1',
           customClasses: [],
+          deletedClasses: [],
+          classAttendanceDays: {},
         },
         classesData: {}
       }
@@ -1009,6 +1217,29 @@
       const dt = new Date(y, m, d);
       const day = dt.getDay();
       return day === 5 || day === 6; // 5 = الجمعة, 6 = السبت
+    }
+
+    // أيام الحضور المحددة لكل فصل (افتراضياً أيام الأحد إلى الخميس)
+    function getClassAttendanceDays(className) {
+      const cls = className || state.currentClass;
+      if (state.classAttendanceDays && state.classAttendanceDays[cls] && Array.isArray(state.classAttendanceDays[cls])) {
+        return state.classAttendanceDays[cls];
+      }
+      return [0, 1, 2, 3, 4]; // 0=الأحد, 1=الإثنين, 2=الثلاثاء, 3=الأربعاء, 4=الخميس
+    }
+
+    function isClassAttendanceDay(className, dateStr) {
+      if (!dateStr || typeof dateStr !== 'string') return false;
+      const parts = dateStr.trim().split('-');
+      if (parts.length !== 3) return false;
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      if (isNaN(y) || isNaN(m) || isNaN(d)) return false;
+      const dt = new Date(y, m, d);
+      const day = dt.getDay();
+      const allowed = getClassAttendanceDays(className);
+      return allowed.includes(day);
     }
 
     function calculateAttendanceScore(studentName, absenceMarks, activeDaysCount, hasAnyScore) {
@@ -1236,6 +1467,8 @@
         lastTerm: state.term,
         lastClass: state.currentClass,
         customClasses: state.customClasses,
+        deletedClasses: state.deletedClasses || [],
+        classAttendanceDays: state.classAttendanceDays || {},
       };
 
       // 1. LocalStorage
@@ -1309,26 +1542,77 @@
     }
 
     function renderHeader(tabIndex) {
-      const defaultClasses = ['اول 1', 'اول 2', 'ثاني 1', 'ثاني 2', 'ثالث 1', 'ثالث 2'];
-      const allClasses = Array.from(new Set([...defaultClasses, ...state.customClasses]));
+      const allClasses = getAvailableClasses();
 
       let optionsHtml = '';
       allClasses.forEach(cls => {
         optionsHtml += `<option value="${cls}" ${state.currentClass === cls ? 'selected' : ''}>${cls}</option>`;
       });
       optionsHtml += `<option value="__custom__">+ إضافة فصل جديد...</option>`;
+      optionsHtml += `<option value="__delete_class__">🗑️ مسح / حذف فصل...</option>`;
 
       const month1Label = state.term === 'الاول' ? 'شهر أكتوبر' : 'شهر مارس';
       const month2Label = state.term === 'الاول' ? 'شهر نوفمبر' : 'شهر أبريل';
+
+      // Attendance Days Checkboxes Widget
+      const classDays = getClassAttendanceDays(state.currentClass);
+      const dayDefs = [
+        { idx: 0, name: 'الأحد' },
+        { idx: 1, name: 'الإثنين' },
+        { idx: 2, name: 'الثلاثاء' },
+        { idx: 3, name: 'الأربعاء' },
+        { idx: 4, name: 'الخميس' }
+      ];
+
+      let daysCheckboxesHtml = '';
+      dayDefs.forEach(d => {
+        const isChecked = classDays.includes(d.idx);
+        daysCheckboxesHtml += `
+          <label class="class-day-check-item">
+            <input
+              type="checkbox"
+              value="${d.idx}"
+              ${isChecked ? 'checked' : ''}
+              onchange="handleClassDayToggle('${state.currentClass}', ${d.idx}, this.checked)"
+            />
+            <span>${d.name}</span>
+          </label>
+        `;
+      });
+
+      const attendanceDaysRowHtml = `
+        <div class="header-row class-attendance-days-row">
+          <div class="attendance-days-group">
+            <span class="attendance-days-heading">
+              📅 أيام حصص الحضور لفصل (<strong>${state.currentClass}</strong>):
+            </span>
+            <div class="attendance-days-checkboxes">
+              ${daysCheckboxesHtml}
+            </div>
+            <span class="attendance-days-hint">
+              * الأيام غير المختارة لا تظهر في منتقي التاريخ (Datepicker)
+            </span>
+          </div>
+        </div>
+      `;
+
+      const classSelectWidget = `
+        <div style="display: flex; gap: 4px; width: 100%; align-items: center;">
+          <select class="header-class-name" onchange="handleClassChange(this.value)">
+            ${optionsHtml}
+          </select>
+          <button type="button" class="btn-action-del-class" onclick="handleDeleteClassPrompt('${state.currentClass}')" title="مسح وحذف الفصل الحالي (${state.currentClass}) نهائياً من القائمة">
+            🗑️
+          </button>
+        </div>
+      `;
 
       let classSelectOrBadge = '';
       if (tabIndex === 0) {
         classSelectOrBadge = `
           <div class="header-item">
             <label>فصل (تحديد البيانات):</label>
-            <select class="header-class-name" onchange="handleClassChange(this.value)">
-              ${optionsHtml}
-            </select>
+            ${classSelectWidget}
           </div>
         `;
       } else {
@@ -1342,9 +1626,7 @@
           </div>
           <div class="header-item">
             <label>فصل (تحديد البيانات):</label>
-            <select class="header-class-name" onchange="handleClassChange(this.value)">
-              ${optionsHtml}
-            </select>
+            ${classSelectWidget}
           </div>
         `;
       }
@@ -1379,6 +1661,7 @@
             </div>
             ${classSelectOrBadge}
           </div>
+          ${attendanceDaysRowHtml}
         </div>
       `;
     }
@@ -1399,6 +1682,9 @@
           <span class="autosave-badge" id="autosave-status">${state.autosaveStatus}</span>
           <button type="button" class="btn-action btn-clear" style="padding: 3px 8px; font-size: 11px;" onclick="handleClearClassData()">
             مسح بيانات الفصل
+          </button>
+          <button type="button" class="btn-action btn-clear" style="padding: 3px 8px; font-size: 11px; background: #fee2e2; color: #dc2626; border-color: #fca5a5;" onclick="handleDeleteClassPrompt('${state.currentClass}')" title="مسح وحذف هذا الفصل نهائياً من قائمة الفصول">
+            🗑️ مسح الفصل نهائياً
           </button>
         `;
       } else {
@@ -2035,16 +2321,175 @@
       scheduleAutoSave();
     }
 
+    let activeDatePickerInfo = null;
+
     function triggerDatePicker(tabIndex, colIdx) {
-      const picker = document.getElementById(`date-picker-${tabIndex}-${colIdx}`);
-      if (picker) {
-        if (typeof picker.showPicker === 'function') {
-          picker.showPicker();
-        } else {
-          picker.focus();
-          picker.click();
+      openCustomDatePicker(tabIndex, colIdx);
+    }
+
+    function openCustomDatePicker(tabIndex, colIdx) {
+      activeDatePickerInfo = { tabIndex, colIdx };
+      const modal = document.getElementById('custom-datepicker-modal');
+      if (!modal) return;
+
+      const dates = tabIndex === 1 ? state.tab1Dates : state.tab2Dates;
+      const currentDateVal = dates[colIdx] || '';
+      const dateLimits = getDateLimitsForTab(state.term, state.year, tabIndex);
+      const colMinDate = getMinDateForColumn(dates, colIdx);
+      const allowedDays = getClassAttendanceDays(state.currentClass);
+
+      const dayNamesMap = {
+        0: 'الأحد',
+        1: 'الإثنين',
+        2: 'الثلاثاء',
+        3: 'الأربعاء',
+        4: 'الخميس'
+      };
+
+      const monthName = tabIndex === 1
+        ? (state.term === 'الاول' ? 'أكتوبر' : 'مارس')
+        : (state.term === 'الاول' ? 'نوفمبر' : 'أبريل');
+
+      const titleEl = document.getElementById('cdp-title');
+      if (titleEl) titleEl.innerText = `اختيار تاريخ اليوم ${colIdx + 1} (${monthName})`;
+
+      const subtitleEl = document.getElementById('cdp-subtitle');
+      if (subtitleEl) subtitleEl.innerText = `فصل: ${state.currentClass} | الأيام المعروضة هي أيام حصص الفصل المحددة فقط`;
+
+      if (!dateLimits.min || !dateLimits.max) {
+        showToast('تعذر تحديد مدى تواريخ هذا الشهر.', 'warning');
+        return;
+      }
+
+      const startParts = dateLimits.min.split('-');
+      const endParts = dateLimits.max.split('-');
+      const year = parseInt(startParts[0], 10);
+      const month = parseInt(startParts[1], 10);
+      const endDay = parseInt(endParts[2], 10);
+
+      const dayColumns = {};
+      allowedDays.forEach(dIdx => {
+        if (dayNamesMap[dIdx]) {
+          dayColumns[dIdx] = [];
+        }
+      });
+
+      for (let day = 1; day <= endDay; day++) {
+        const d = new Date(year, month - 1, day);
+        const dayOfWeek = d.getDay();
+
+        // الأيام غير المختارة لا تظهر في Datepicker نهائياً
+        if (!allowedDays.includes(dayOfWeek)) continue;
+        if (dayOfWeek === 5 || dayOfWeek === 6) continue;
+
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isPastMin = colMinDate ? (dateStr < colMinDate) : false;
+        const isCurrent = (dateStr === currentDateVal);
+
+        if (dayColumns[dayOfWeek]) {
+          dayColumns[dayOfWeek].push({
+            day,
+            dateStr,
+            isPastMin,
+            isCurrent,
+            label: `${day} / ${month}`
+          });
         }
       }
+
+      let gridHtml = '';
+      allowedDays.forEach(dIdx => {
+        const list = dayColumns[dIdx];
+        if (!list) return;
+        const dayTitle = dayNamesMap[dIdx] || '';
+        let buttonsHtml = '';
+        list.forEach(item => {
+          const btnClass = item.isCurrent ? 'datepicker-date-btn active-selected' : 'datepicker-date-btn';
+          const disabledAttr = item.isPastMin ? 'disabled title="لا يمكن اختياره لأنه يسبق تاريخ اليوم السابق له"' : '';
+          buttonsHtml += `
+            <button
+              type="button"
+              class="${btnClass}"
+              ${disabledAttr}
+              onclick="selectCustomPickerDate('${item.dateStr}')"
+            >
+              ${item.isCurrent ? '✓ ' : ''}${item.label}
+            </button>
+          `;
+        });
+
+        gridHtml += `
+          <div class="datepicker-day-col">
+            <div class="datepicker-day-title">${dayTitle}</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              ${buttonsHtml.length > 0 ? buttonsHtml : '<span style="font-size: 11px; color: #94a3b8; text-align: center; padding: 10px 0;">لا توجد تواريخ</span>'}
+            </div>
+          </div>
+        `;
+      });
+
+      const gridEl = document.getElementById('cdp-grid');
+      if (gridEl) gridEl.innerHTML = gridHtml;
+
+      const clearBtn = document.getElementById('cdp-clear-btn');
+      if (clearBtn) {
+        clearBtn.style.display = currentDateVal ? 'inline-block' : 'none';
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function selectCustomPickerDate(dateStr) {
+      if (!activeDatePickerInfo) return;
+      const { tabIndex, colIdx } = activeDatePickerInfo;
+      closeCustomDatePicker();
+      handleDateChange(tabIndex, colIdx, dateStr);
+    }
+
+    function clearCustomPickerDate() {
+      if (!activeDatePickerInfo) return;
+      const { tabIndex, colIdx } = activeDatePickerInfo;
+      closeCustomDatePicker();
+      handleDateChange(tabIndex, colIdx, '');
+    }
+
+    function closeCustomDatePicker(e) {
+      if (e && e.target && e.target.id !== 'custom-datepicker-modal' && e.target.id !== 'cdp-close-btn') {
+        return;
+      }
+      const modal = document.getElementById('custom-datepicker-modal');
+      if (modal) modal.style.display = 'none';
+      activeDatePickerInfo = null;
+    }
+
+    function handleClassDayToggle(className, dayIndex, isChecked) {
+      const cls = className || state.currentClass;
+      if (!state.classAttendanceDays) state.classAttendanceDays = {};
+      let currentDays = getClassAttendanceDays(cls).slice();
+
+      if (isChecked) {
+        if (!currentDays.includes(dayIndex)) {
+          currentDays.push(dayIndex);
+          currentDays.sort((a, b) => a - b);
+        }
+      } else {
+        currentDays = currentDays.filter(d => d !== dayIndex);
+        if (currentDays.length === 0) {
+          showToast('تنبيه: يجب اختيار يوم حضور واحد على الأقل لهذا الفصل!', 'warning');
+          renderAppView();
+          return;
+        }
+      }
+
+      state.classAttendanceDays[cls] = currentDays;
+      if (state.masterDb && state.masterDb.globalSettings) {
+        state.masterDb.globalSettings.classAttendanceDays = state.classAttendanceDays;
+      }
+
+      scheduleAutoSave();
+      renderAppView();
+      const dayNamesArr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+      showToast(`تم تحديث أيام حصص الفصل (${cls}) - ${isChecked ? 'تم تفعيل' : 'تم استبعاد'} يوم ${dayNamesArr[dayIndex]}`, 'info');
     }
 
     function handleDateChange(tabIndex, colIdx, dateVal) {
@@ -2061,7 +2506,18 @@
           return;
         }
 
-        // 2. أول الأيام (العمود الأول) مفتوح لاختيار أي يوم حتى ولو قبل اليوم الحالي
+        // 2. التحقق من أيام الحضور المحددة لهذا الفصل
+        if (!isClassAttendanceDay(state.currentClass, dateVal)) {
+          const parts = dateVal.split('-');
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          const dayNamesArr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+          const dayName = dayNamesArr[d.getDay()] || '';
+          showToast(`عفواً: يوم ${dayName} (${dateVal}) ليس من أيام حصص هذا الفصل المحددة (${state.currentClass}).`, 'warning');
+          renderAppView();
+          return;
+        }
+
+        // 3. أول الأيام (العمود الأول) مفتوح لاختيار أي يوم حتى ولو قبل اليوم الحالي
         // أما باقي الأعمدة فلا تسمح باختيار يوم قبل تاريخ اليوم في العمود السابق له
         if (colIdx > 0) {
           const colMinDate = getMinDateForColumn(dates, colIdx);
@@ -2089,8 +2545,22 @@
       renderAppView();
     }
 
+    function getAvailableClasses() {
+      const defaultClasses = ['اول 1', 'اول 2', 'ثاني 1', 'ثاني 2', 'ثالث 1', 'ثالث 2'];
+      const deleted = state.deletedClasses || [];
+      const combined = Array.from(new Set([...defaultClasses, ...(state.customClasses || [])]));
+      const filtered = combined.filter(c => !deleted.includes(c));
+      return filtered.length > 0 ? filtered : ['اول 1'];
+    }
+
     async function handleClassChange(selectedVal) {
       if (!selectedVal) return;
+
+      if (selectedVal === '__delete_class__') {
+        handleDeleteClassPrompt();
+        return;
+      }
+
       let targetClass = selectedVal;
 
       if (selectedVal === '__custom__') {
@@ -2098,7 +2568,10 @@
         if (newClass && newClass.trim()) {
           const trimmed = newClass.trim();
           targetClass = trimmed;
-          state.customClasses = Array.from(new Set([...state.customClasses, trimmed]));
+          state.customClasses = Array.from(new Set([...(state.customClasses || []), trimmed]));
+          if (state.deletedClasses) {
+            state.deletedClasses = state.deletedClasses.filter(c => c !== trimmed);
+          }
         } else {
           renderAppView();
           return;
@@ -2109,6 +2582,79 @@
       state.currentClass = targetClass;
       loadClassData(state.term, targetClass, state.pageSize);
       renderAppView();
+    }
+
+    async function handleDeleteClassPrompt(targetCls) {
+      const available = getAvailableClasses();
+      const defaultTarget = targetCls || state.currentClass;
+
+      const promptMsg = `مسح وحذف الفصول:\nالفصول الحالية المتاحة: [ ${available.join(' ، ')} ]\n\nأدخل اسم الفصل المراد مسحه وحذفه نهائياً من القائمة وبياناته:`;
+      const inputCls = prompt(promptMsg, defaultTarget);
+
+      if (!inputCls || !inputCls.trim()) {
+        renderAppView();
+        return;
+      }
+
+      const trimmed = inputCls.trim();
+      if (!available.includes(trimmed)) {
+        showToast(`الفصل (${trimmed}) غير موجود في قائمة الفصول.`, 'warning');
+        renderAppView();
+        return;
+      }
+
+      if (available.length <= 1) {
+        if (!confirm(`هذا هو الفصل الوحيد المتبقي (${trimmed}). مسحه سيؤدي لتفريغ درجاته وبياناته والبدء بفصل جديد. هل تريد الاستمرار؟`)) {
+          renderAppView();
+          return;
+        }
+      } else {
+        if (!confirm(`هل أنت متأكد من مسح وحذف الفصل (${trimmed}) نهائياً؟\nسيتم حذف هذا الفصل من قائمة الفصول ومسح كافة بياناته ودرجاته.`)) {
+          renderAppView();
+          return;
+        }
+      }
+
+      await executeDeleteClass(trimmed);
+    }
+
+    async function executeDeleteClass(clsToDelete) {
+      // 1. Remove from localStorage
+      try {
+        localStorage.removeItem(getStorageKey('الاول', clsToDelete));
+        localStorage.removeItem(getStorageKey('الثاني', clsToDelete));
+      } catch (e) {}
+
+      // 2. Remove from in-memory masterDb
+      if (state.masterDb && state.masterDb.classesData) {
+        delete state.masterDb.classesData[getStorageKey('الاول', clsToDelete)];
+        delete state.masterDb.classesData[getStorageKey('الثاني', clsToDelete)];
+      }
+
+      // 3. Update customClasses and deletedClasses
+      state.customClasses = (state.customClasses || []).filter(c => c !== clsToDelete);
+      if (!state.deletedClasses) state.deletedClasses = [];
+      if (!state.deletedClasses.includes(clsToDelete)) {
+        state.deletedClasses.push(clsToDelete);
+      }
+      if (state.masterDb && state.masterDb.globalSettings) {
+        state.masterDb.globalSettings.deletedClasses = state.deletedClasses;
+        state.masterDb.globalSettings.customClasses = state.customClasses;
+      }
+
+      // 4. Update current active class if needed
+      const remaining = getAvailableClasses();
+      if (state.currentClass === clsToDelete) {
+        state.currentClass = remaining[0] || 'اول 1';
+      }
+      if (state.masterDb && state.masterDb.globalSettings) {
+        state.masterDb.globalSettings.lastClass = state.currentClass;
+      }
+
+      await saveMasterDatabase();
+      loadClassData(state.term, state.currentClass, state.pageSize);
+      renderAppView();
+      showToast(`تم مسح وحذف الفصل (${clsToDelete}) وكافة درجاته وبياناته بنجاح!`, 'success');
     }
 
     async function handleTermChange(newTerm) {
@@ -2815,8 +3361,11 @@
               if (g.year) state.year = g.year;
               if (g.pageSize) state.pageSize = g.pageSize;
               if (g.customClasses) state.customClasses = g.customClasses;
+              if (g.deletedClasses) state.deletedClasses = g.deletedClasses;
+              if (g.classAttendanceDays) state.classAttendanceDays = g.classAttendanceDays;
               const initTerm = g.lastTerm || sysInit.term;
-              const initClass = g.lastClass || 'اول 1';
+              const available = getAvailableClasses();
+              const initClass = (g.lastClass && available.includes(g.lastClass)) ? g.lastClass : (available[0] || 'اول 1');
               state.term = initTerm;
               state.currentClass = initClass;
               loadClassData(initTerm, initClass, g.pageSize || 25);
@@ -2832,7 +3381,43 @@
 
       state.isFolderServerMode = false;
       document.body.classList.remove('folder-server-mode');
-      loadClassData(sysInit.term, 'اول 1', 25);
+
+      // LocalStorage recovery in offline / direct browser mode
+      try {
+        const savedDb = localStorage.getItem('grading_master_db');
+        if (savedDb) {
+          const parsed = JSON.parse(savedDb);
+          if (parsed && (parsed.classesData || parsed.globalSettings)) {
+            state.masterDb = parsed;
+            const g = parsed.globalSettings;
+            if (g) {
+              if (g.adminSchool) state.adminSchool = g.adminSchool;
+              if (g.teacher) state.teacher = g.teacher;
+              if (g.subject) state.subject = g.subject;
+              if (g.year) state.year = g.year;
+              if (g.pageSize) state.pageSize = g.pageSize;
+              if (g.customClasses) state.customClasses = g.customClasses;
+              if (g.deletedClasses) state.deletedClasses = g.deletedClasses;
+              if (g.classAttendanceDays) state.classAttendanceDays = g.classAttendanceDays;
+              const initTerm = g.lastTerm || sysInit.term;
+              const available = getAvailableClasses();
+              const initClass = (g.lastClass && available.includes(g.lastClass)) ? g.lastClass : (available[0] || 'اول 1');
+              state.term = initTerm;
+              state.currentClass = initClass;
+              loadClassData(initTerm, initClass, g.pageSize || 25);
+              switchTab(0);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('LocalStorage DB load error:', e);
+      }
+
+      const available = getAvailableClasses();
+      const defaultCls = available[0] || 'اول 1';
+      state.currentClass = defaultCls;
+      loadClassData(sysInit.term, defaultCls, 25);
       switchTab(0);
     }
 
