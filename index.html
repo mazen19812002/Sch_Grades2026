@@ -1,21 +1,2640 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>كشوف تقدير درجات مادة اللغة الإنجليزية - د. مازن بدوي</title>
-    <meta name="description" content="نظام متكامل لإدارة ورصد كشوف تقدير درجات مادة اللغة الإنجليزية وأعمال السنة والغياب مع دعم الطباعة A4 واستيراد وتصدير إكسل" />
-    <meta property="og:title" content="كشوف تقدير درجات مادة اللغة الإنجليزية - د. مازن بدوي" />
-    <meta property="og:description" content="نظام متكامل لإدارة ورصد كشوف تقدير درجات مادة اللغة الإنجليزية وأعمال السنة والغياب مع دعم الطباعة A4 واستيراد وتصدير إكسل" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>كشوف تقدير درجات مادة اللغة الإنجليزية</title>
+  <meta name="description" content="نظام متكامل لإدارة ورصد كشوف تقدير درجات مادة اللغة الإنجليزية وأعمال السنة والغياب مع دعم الطباعة A4 واستيراد وتصدير إكسل" />
+  <meta property="og:title" content="كشوف تقدير درجات مادة اللغة الإنجليزية" />
+  <meta property="og:description" content="نظام متكامل لإدارة ورصد كشوف تقدير درجات مادة اللغة الإنجليزية وأعمال السنة والغياب مع دعم الطباعة A4 واستيراد وتصدير إكسل" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
 
+  <!-- SheetJS for Excel Import/Export (Loaded when online; offline fallback provided) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
+      --glass-bg: rgba(255, 255, 255, 0.88);
+      --glass-border: rgba(255, 255, 255, 0.95);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+      --text-color: #0f172a;
+      --primary-blue: #0284c7;
+      --primary-dark: #0369a1;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --danger-red: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-color);
+      min-height: 100vh;
+      margin: 0;
+      padding: 10px;
+      direction: rtl;
+    }
+
+    /* Toast Notifications */
+    #toast-container {
+      position: fixed;
+      top: 75px;
+      right: 25px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast.success { border-right: 4px solid var(--accent-green); }
+    .toast.info { border-right: 4px solid var(--primary-blue); }
+    .toast.warning { border-right: 4px solid var(--accent-amber); }
+    .toast.error { border-right: 4px solid var(--danger-red); }
+
+    /* Top Navigation Bar & Tools */
+    .top-bar {
+      position: fixed;
+      top: 10px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--glass-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 8px 15px;
+      box-shadow: var(--glass-shadow);
+      z-index: 1000;
+      gap: 10px;
+      flex-wrap: wrap;
+      transition: all 0.3s ease;
+    }
+    .tabs-container {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(2, 132, 199, 0.3);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn:hover {
+      background: rgba(2, 132, 199, 0.15);
+      transform: translateY(-1px);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      border-color: #0284c7;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+    }
+    .action-row-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      color: #ffffff;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .btn-print { background: linear-gradient(135deg, #0284c7, #0369a1); }
+    .btn-export { background: linear-gradient(135deg, #10b981, #059669); }
+    .btn-import { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .btn-save-folder { background: linear-gradient(135deg, #0284c7, #0369a1); }
+    .btn-open-folder { background: linear-gradient(135deg, #475569, #334155); }
+    .btn-backup { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+    .btn-restore { background: linear-gradient(135deg, #0d9488, #0f766e); }
+    .btn-toggle-edit { background: linear-gradient(135deg, #64748b, #475569); }
+    .btn-toggle-edit.unlocked { background: linear-gradient(135deg, #e11d48, #be123c); }
+    .btn-clear { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+    .btn-action:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .control-btn {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(2, 132, 199, 0.3);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--text-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .control-btn:hover {
+      background: #ffffff;
+      transform: scale(1.08);
+      border-color: #0284c7;
+    }
+
+    /* Main Container */
+    .main-wrapper {
+      margin-top: 85px;
+      margin-bottom: 40px;
+      width: 100%;
+      max-width: 100%;
+      transition: transform 0.2s ease;
+      transform-origin: top center;
+    }
+    .tab-content {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 15px;
+      box-shadow: var(--glass-shadow);
+      animation: fadeIn 0.3s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header Info Section */
+    .sheet-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid #0284c7;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
+    }
+    .header-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .header-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 180px;
+    }
+    .header-item label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0369a1;
+      white-space: nowrap;
+    }
+    .header-item input, .header-item select, .static-header-val {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1.5px solid #0284c7;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-color);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .header-item input:focus, .header-item select:focus {
+      border-color: #0369a1;
+      background: #ffffff;
+      box-shadow: 0 0 6px rgba(2, 132, 199, 0.35);
+    }
+
+    /* Print Page Controls Bar */
+    .print-controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 14px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid #bae6fd;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .print-controls-bar .controls-subgroup {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .print-controls-bar input {
+      width: 65px;
+      padding: 3px 5px;
+      text-align: center;
+      border: 1.5px solid #0284c7;
+      border-radius: 6px;
+      background: #fff;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .autosave-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #059669;
+      font-size: 11px;
+      background: #d1fae5;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+
+    /* Tables & Pages Container */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 6px;
+      background: transparent;
+      margin-bottom: 10px;
+    }
+    .print-page {
+      border: 2px solid #0284c7;
+      background: #ffffff;
+      margin-bottom: 24px;
+      padding: 12px;
+      border-radius: 10px;
+      position: relative;
+      box-shadow: 0 4px 18px rgba(2, 132, 199, 0.12);
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .page-footer-pagination {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1.5px solid #bae6fd;
+      color: #0369a1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 11px;
+    }
+    th, td {
+      border: 1.5px solid #0284c7;
+      padding: 2px 1px;
+      vertical-align: middle;
+      height: 26px;
+    }
+    th {
+      background: #bae6fd;
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    /* Date picker Header Button and Display */
+    .date-picker-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 20px;
+    }
+    .btn-pick-date {
+      background: rgba(2, 132, 199, 0.12);
+      border: 1px solid #0284c7;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 1px 4px;
+      font-size: 11px;
+      line-height: 1.2;
+      transition: all 0.2s ease;
+      color: #0369a1;
+    }
+    .btn-pick-date:hover {
+      background: #0284c7;
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+    .date-display-text {
+      font-size: 11px;
+      font-weight: 800;
+      color: #0369a1;
+      cursor: pointer;
+      padding: 1px 3px;
+      border-radius: 4px;
+      background: #e0f2fe;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+    }
+    .date-display-text:hover {
+      background: #bae6fd;
+      text-decoration: underline;
+    }
+
+    tr:nth-child(even) {
+      background: #f0f9ff;
+    }
+    td input[type="text"], .score-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-color);
+      outline: none;
+    }
+    td input:focus {
+      background: #e0f2fe;
+      border-radius: 3px;
+    }
+
+    /* Absence Input & Cell Styling */
+    .absence-cell {
+      background-color: #fff1f2 !important;
+      border: 1.5px solid #fecdd3 !important;
+    }
+    .absence-input {
+      width: 100%;
+      background-color: transparent !important;
+      border: none !important;
+      font-size: 13px !important;
+      font-weight: 900 !important;
+      color: #dc2626 !important;
+      text-align: center !important;
+      outline: none;
+    }
+    .absence-input:focus {
+      background: #fee2e2 !important;
+      border-radius: 3px;
+    }
+    .absence-header-group {
+      background: linear-gradient(135deg, #ffe4e6, #fecdd3) !important;
+      color: #9f1239 !important;
+      border-color: #fca5a5 !important;
+      font-weight: 800 !important;
+    }
+    .absence-date-header {
+      background-color: #fff1f2 !important;
+      border-color: #fca5a5 !important;
+    }
+
+    /* Print Sheet Header */
+    .print-sheet-header {
+      display: none;
+    }
+
+    /* Tab lock mode */
+    .locked-tab input, .locked-tab select {
+      pointer-events: none !important;
+      background: rgba(241, 245, 249, 0.7) !important;
+    }
+
+    .calc-cell {
+      font-weight: 800;
+      color: #0369a1;
+      background: #e0f2fe;
+      font-size: 12px;
+    }
+    .grand-total-cell {
+      font-weight: 900;
+      color: #0284c7;
+      background: #bae6fd;
+      font-size: 13px;
+    }
+    .orig-score-cell {
+      background: #ffffff;
+    }
+
+    /* Signatures Section */
+    .signatures-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+      text-align: center;
+      padding-top: 8px;
+      border-top: 1.5px dashed #0284c7;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .signature-box {
+      font-weight: 700;
+      font-size: 11px;
+      color: #0f172a;
+      background: #f8fafc;
+      padding: 6px 4px;
+      border-radius: 6px;
+      border: 1px solid #7dd3fc;
+    }
+
+    /* Floating Toggle & Footer */
+    .floating-toggle {
+      position: fixed;
+      bottom: 28px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: all 0.2s ease;
+    }
+    .floating-toggle:hover {
+      transform: scale(1.1);
+    }
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 24px;
+      background: linear-gradient(90deg, #0284c7, #10b981, #0284c7);
+      background-size: 200% 100%;
+      animation: gradientMove 6s linear infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      z-index: 900;
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .hidden-ui {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+    }
+
+    /* Print CSS - Strict A4 Single Page Containment */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 5mm;
+      }
+      html, body {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .top-bar, .floating-toggle, footer, .action-row-top, .print-controls-bar, #toast-container, .btn-pick-date, .sheet-header {
+        display: none !important;
+      }
+      .main-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+      }
+      .tab-content {
+        background: white !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+      .print-page {
+        box-sizing: border-box !important;
+        width: 100% !important;
+        border: 1.5px solid #0284c7 !important;
+        margin: 0 !important;
+        padding: 2.5mm 3.5mm !important;
+        box-shadow: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .print-page:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+
+      /* Exact A4 Height Containment: Portrait (Tab 0) */
+      .tab-portrait .print-page {
+        height: 286mm !important;
+        max-height: 286mm !important;
+      }
+
+      /* Exact A4 Height Containment: Landscape (Tab 1 & Tab 2) */
+      .tab-landscape .print-page {
+        height: 199mm !important;
+        max-height: 199mm !important;
+      }
+
+      .print-sheet-header {
+        display: block !important;
+        margin-bottom: 1.5mm !important;
+        padding-bottom: 1mm !important;
+        border-bottom: 1.5px solid #0284c7 !important;
+        flex-shrink: 0 !important;
+      }
+      .print-header-top {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        font-size: 9.5px !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        line-height: 1.25 !important;
+      }
+      .print-title-badge {
+        font-size: 11.5px !important;
+        font-weight: 900 !important;
+        color: #0369a1 !important;
+        display: block !important;
+      }
+      .table-container {
+        flex: 1 1 auto !important;
+        margin-bottom: 1.5mm !important;
+        overflow: hidden !important;
+        display: flex !important;
+      }
+      table {
+        width: 100% !important;
+        height: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+      }
+      th, td {
+        padding: 0.5px 0.5px !important;
+        height: auto !important;
+        font-size: 8.5px !important;
+        line-height: 1.15 !important;
+        border: 1px solid #0284c7 !important;
+      }
+      th {
+        background-color: #bae6fd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-weight: 700 !important;
+      }
+      .absence-header-group {
+        background-color: #ffe4e6 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color: #9f1239 !important;
+        border-color: #fca5a5 !important;
+      }
+      .absence-date-header {
+        background-color: #fff1f2 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color: #9f1239 !important;
+        border-color: #fca5a5 !important;
+      }
+      .absence-cell {
+        background-color: #fff1f2 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        border-color: #fca5a5 !important;
+      }
+      .absence-input {
+        background-color: transparent !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color: #dc2626 !important;
+        font-weight: 900 !important;
+      }
+      tr:nth-child(even):not(:has(.absence-cell)) {
+        background-color: #f0f9ff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .calc-cell {
+        background-color: #e0f2fe !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-weight: 800 !important;
+      }
+      .grand-total-cell {
+        background-color: #bae6fd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-weight: 900 !important;
+      }
+      .orig-score-cell {
+        background-color: #ffffff !important;
+      }
+      .signatures-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        margin-top: 1mm !important;
+        gap: 4mm !important;
+        flex-shrink: 0 !important;
+      }
+      .signature-box {
+        border: 1px dashed #0284c7 !important;
+        padding: 1.5mm 3mm !important;
+        font-size: 8px !important;
+        font-weight: 700 !important;
+        min-height: 12mm !important;
+        line-height: 1.25 !important;
+        background: #f8fafc !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .page-footer-pagination {
+        margin-top: 1mm !important;
+        padding-top: 0.5mm !important;
+        font-size: 7.5px !important;
+        border-top: 1px solid #bae6fd !important;
+        flex-shrink: 0 !important;
+      }
+    }
+  </style>
+  <style id="print-orientation-style">
+    @page { size: A4 portrait; margin: 5mm; }
+  </style>
+</head>
+<body>
+  <!-- Toast Notifications Container -->
+  <div id="toast-container"></div>
+
+  <!-- Top Bar Navigation & Actions -->
+  <header class="top-bar" id="topBar">
+    <div class="tabs-container">
+      <button type="button" class="tab-btn active" id="btn-tab-0" onclick="switchTab(0)">
+        النموذج الأول (المجمل)
+      </button>
+      <button type="button" class="tab-btn" id="btn-tab-1" onclick="switchTab(1)">
+        شهر أكتوبر
+      </button>
+      <button type="button" class="tab-btn" id="btn-tab-2" onclick="switchTab(2)">
+        شهر نوفمبر
+      </button>
+    </div>
+
+    <div class="action-row-top" id="action-buttons-group">
+      <input type="file" id="excel-file-input" style="display: none" accept=".xlsx, .xls" onchange="handleExcelImport(event)" />
+      <button type="button" class="btn-action btn-import" onclick="document.getElementById('excel-file-input').click()" title="استيراد كشف الإكسل للثلاثة نماذج">
+        📥 استيراد إكسل
+      </button>
+      <button type="button" class="btn-action btn-export" onclick="handleExcelExport()" title="تصدير كشف إكسل كامل بجميع التبويبات">
+        📤 تصدير إكسل
+      </button>
+      <button type="button" class="btn-action btn-save-folder" onclick="handleForceSaveToFolder()" title="حفظ فوري في ملف database.json داخل الفولدر">
+        💾 حفظ بالفولدر
+      </button>
+      <button type="button" class="btn-action btn-open-folder" onclick="handleOpenAppFolder()" title="فتح مجلد البرنامج والبيانات">
+        📁 مجلد البرنامج
+      </button>
+      <button type="button" class="btn-action btn-backup" onclick="handleCreateDatabaseBackup()" title="إنشاء وتنزيل نسخة احتياطية من ملف قاعدة البيانات (database.json)">
+        📦 نسخة احتياطية
+      </button>
+      <input type="file" id="backup-file-input" style="display: none" accept=".json" onchange="handleRestoreDatabaseBackup(event)" />
+      <button type="button" class="btn-action btn-restore" onclick="document.getElementById('backup-file-input').click()" title="استعادة ملف قاعدة بيانات سابق (database.json أو Backup)">
+        ♻️ استعادة نسخة
+      </button>
+      <button type="button" class="btn-action btn-toggle-edit" id="btn-toggle-edit" onclick="toggleEditMode()" title="قفل أو إتاحة تعديل درجات الشهور">
+        🔓 تعديل الشهور: متاح
+      </button>
+      <button type="button" class="btn-action btn-print" onclick="handleTriggerPrint()" title="طباعة النموذج النشط">
+        🖨️ طباعة الكشوف
+      </button>
+      <button type="button" class="btn-action btn-clear" onclick="handleExitApplication()" title="حفظ البيانات وإغلاق البرنامج">
+        🚪 خروج
+      </button>
+    </div>
+
+    <div class="controls-group">
+      <button type="button" class="control-btn" onclick="adjustZoom(-0.1)" title="تصغير حجم العرض">-</button>
+      <button type="button" class="control-btn" onclick="adjustZoom(0.1)" title="تكبير حجم العرض">+</button>
+      <button type="button" class="control-btn" onclick="toggleFullScreen()" title="ملء الشاشة">⛶</button>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="main-wrapper" id="mainWrapper">
+    <!-- Active Tab Content dynamically rendered here -->
+    <div id="tabContentArea"></div>
+  </main>
+
+  <!-- Floating Visibility Toggle Button -->
+  <button type="button" class="floating-toggle" onclick="toggleTopBarVisibility()" title="إظهار / إخفاء شريط الأدوات العلوي">
+    👁
+  </button>
+
+  <!-- Footer -->
+  <footer>
+    All rights are reserved to Dr. Mazen Badawy – Doctor of English Teaching &amp; Testing
+  </footer>
+
+  <!-- Self-Contained Offline Application Logic (Vanilla JS) -->
+  <script>
+    /* ==========================================================================
+       1. Core State & Helpers
+       ========================================================================== */
+    function getSystemTermAndYear() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1; // 1 to 12
+      let startYear;
+      let term;
+
+      if (month >= 7) {
+        startYear = year;
+        term = "الاول";
+      } else if (month === 1) {
+        startYear = year - 1;
+        term = "الاول";
+      } else {
+        startYear = year - 1;
+        term = "الثاني";
+      }
+
+      const academicYear = startYear + "-" + (startYear + 1);
+      return { term: term, academicYear: academicYear, startYear: startYear, nextYear: startYear + 1 };
+    }
+
+    const sysInit = getSystemTermAndYear();
+
+    const state = {
+      adminSchool: 'إدارة شرق كفر الشيخ التعليمية - مدرسة الشهيد نجيب محي الشناوي للتعليم الأساسي بدقميرة',
+      teacher: 'مازن فوزي محمد على بدوي',
+      subject: 'لغة انجليزية',
+      year: sysInit.academicYear,
+      term: sysInit.term,
+      currentClass: 'اول 1',
+      customClasses: [],
+      pageSize: 25,
+      activeTab: 0,
+      isEditModeUnlocked: true,
+      hiddenUI: false,
+      zoom: 1,
+      isFolderServerMode: false,
+      autosaveStatus: '✓ حفظ تلقائي نشط',
+      tab0Rows: [],
+      tab1Rows: [],
+      tab2Rows: [],
+      tab1Dates: Array(12).fill(''),
+      tab2Dates: Array(12).fill(''),
+      masterDb: {
+        globalSettings: {
+          adminSchool: 'إدارة شرق كفر الشيخ التعليمية - مدرسة الشهيد نجيب محي الشناوي للتعليم الأساسي بدقميرة',
+          teacher: 'مازن فوزي محمد على بدوي',
+          subject: 'لغة انجليزية',
+          year: sysInit.academicYear,
+          pageSize: 25,
+          lastTerm: sysInit.term,
+          lastClass: 'اول 1',
+          customClasses: [],
+        },
+        classesData: {}
+      }
+    };
+
+    let isPopulating = false;
+    let autoSaveTimer = null;
+
+    function normalizeArabicDigits(str) {
+      if (str === null || str === undefined) return '';
+      const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+      const persianDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+      let res = str.toString();
+      for (let i = 0; i < 10; i++) {
+        res = res.replace(new RegExp(arabicDigits[i], 'g'), i.toString());
+        res = res.replace(new RegExp(persianDigits[i], 'g'), i.toString());
+      }
+      res = res.replace(/،/g, '.').replace(/,/g, '.');
+      return res;
+    }
+
+    function formatCleanScore(val) {
+      if (val === '' || val === null || val === undefined) return '';
+      const num = parseFloat(normalizeArabicDigits(val));
+      if (isNaN(num)) return '';
+      const rounded = Math.round(num * 10) / 10;
+      return rounded.toString();
+    }
+
+    function getDateLimitsForTab(term, yearStr, tabIndex) {
+      const startYear = parseInt(normalizeArabicDigits(yearStr).split('-')[0]) || new Date().getFullYear();
+      const nextYear = startYear + 1;
+      if (term === "الاول") {
+        if (tabIndex === 1) return { min: startYear + "-10-01", max: startYear + "-10-31" };
+        if (tabIndex === 2) return { min: startYear + "-11-01", max: startYear + "-11-30" };
+      } else {
+        if (tabIndex === 1) return { min: nextYear + "-03-01", max: nextYear + "-03-31" };
+        if (tabIndex === 2) return { min: nextYear + "-04-01", max: nextYear + "-04-30" };
+      }
+      return { min: "", max: "" };
+    }
+
+    function calculateAttendanceScore(studentName, absenceMarks, activeDaysCount, hasAnyScore) {
+      let hasAnyAbsenceMark = false;
+      let studentAbsenceCount = 0;
+
+      for (const mark of absenceMarks) {
+        const val = mark ? mark.trim() : '';
+        if (val === 'غ' || val.toLowerCase() === 'y') {
+          studentAbsenceCount++;
+          hasAnyAbsenceMark = true;
+        } else if (val !== '') {
+          hasAnyAbsenceMark = true;
+        }
+      }
+
+      if (!studentName.trim() && !hasAnyAbsenceMark && !hasAnyScore) return '';
+      if (!hasAnyAbsenceMark && !hasAnyScore) return '';
+
+      const totalDays = activeDaysCount > 0 ? activeDaysCount : 12;
+      let ratio = studentAbsenceCount / totalDays;
+      if (ratio > 1) ratio = 1;
+      let absenceScore = 10 - (ratio * 10);
+      absenceScore = Math.min(10, Math.max(0, Math.round(absenceScore * 10) / 10));
+      return formatCleanScore(absenceScore);
+    }
+
+    function calculateHomeworkTotal(hwScores) {
+      let hasHw = false;
+      let sumHw = 0;
+      for (let i = 0; i < 4; i++) {
+        const raw = hwScores[i] ? hwScores[i].trim() : '';
+        if (raw !== '') {
+          hasHw = true;
+          const num = parseFloat(normalizeArabicDigits(raw)) || 0;
+          sumHw += Math.min(2.5, Math.max(0, num));
+        }
+      }
+      return hasHw ? formatCleanScore(Math.min(10, sumHw)) : '';
+    }
+
+    function calculateAssessmentTotal(assScores) {
+      let hasAss = false;
+      let sumAss = 0;
+      for (let i = 0; i < 4; i++) {
+        const raw = assScores[i] ? assScores[i].trim() : '';
+        if (raw !== '') {
+          hasAss = true;
+          const num = parseFloat(normalizeArabicDigits(raw)) || 0;
+          sumAss += Math.min(5, Math.max(0, num));
+        }
+      }
+      return hasAss ? formatCleanScore(Math.min(20, sumAss)) : '';
+    }
+
+    function createEmptyTab0Rows(count) {
+      return Array.from({ length: count }, () => ({ name: '', notes: '' }));
+    }
+
+    function createEmptyMonthRows(count) {
+      return Array.from({ length: count }, () => ({
+        name: '',
+        absence: Array(12).fill(''),
+        hw: Array(4).fill(''),
+        ass: Array(4).fill(''),
+        exam: ''
+      }));
+    }
+
+    /* ==========================================================================
+       2. Toast Notifications
+       ========================================================================== */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      let icon = 'ℹ️';
+      if (type === 'success') icon = '✅';
+      if (type === 'warning') icon = '⚠️';
+      if (type === 'error') icon = '❌';
+
+      toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+      container.appendChild(toast);
+
+      setTimeout(() => { toast.classList.add('show'); }, 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 350);
+      }, 4000);
+    }
+
+    /* ==========================================================================
+       3. Data Storage & Master Database
+       ========================================================================== */
+    function getStorageKey(t = state.term, c = state.currentClass) {
+      return 'grading_app_data_' + t + '_' + c;
+    }
+
+    function extractCurrentPayload(t = state.term, c = state.currentClass) {
+      return {
+        class: c,
+        term: t,
+        adminSchool: state.adminSchool,
+        teacher: state.teacher,
+        subject: state.subject,
+        year: state.year,
+        sheets: [
+          { tabIndex: 0, dates: [], rows: state.tab0Rows },
+          { tabIndex: 1, dates: state.tab1Dates, rows: state.tab1Rows },
+          { tabIndex: 2, dates: state.tab2Dates, rows: state.tab2Rows },
+        ],
+      };
+    }
+
+    function populateFromPayload(payload, desiredPageSize = state.pageSize) {
+      isPopulating = true;
+      try {
+        if (payload.adminSchool) state.adminSchool = payload.adminSchool;
+        if (payload.teacher) state.teacher = payload.teacher;
+        if (payload.subject) state.subject = payload.subject;
+        if (payload.year) state.year = payload.year;
+
+        const targetCount = desiredPageSize * 2;
+        let t0 = createEmptyTab0Rows(targetCount);
+        let t1 = createEmptyMonthRows(targetCount);
+        let t2 = createEmptyMonthRows(targetCount);
+        let d1 = Array(12).fill('');
+        let d2 = Array(12).fill('');
+
+        if (payload.sheets) {
+          payload.sheets.forEach((sheet) => {
+            if (sheet.tabIndex === 0) {
+              t0 = Array.from({ length: targetCount }, (_, i) => {
+                const r = sheet.rows?.[i];
+                return { name: r?.name || '', notes: r?.notes || '' };
+              });
+            } else if (sheet.tabIndex === 1) {
+              if (sheet.dates) d1 = Array.from({ length: 12 }, (_, i) => sheet.dates[i] || '');
+              t1 = Array.from({ length: targetCount }, (_, i) => {
+                const r = sheet.rows?.[i];
+                return {
+                  name: r?.name || '',
+                  absence: Array.from({ length: 12 }, (_, a) => r?.absence?.[a] || ''),
+                  hw: Array.from({ length: 4 }, (_, h) => r?.hw?.[h] || ''),
+                  ass: Array.from({ length: 4 }, (_, a) => r?.ass?.[a] || ''),
+                  exam: r?.exam || '',
+                };
+              });
+            } else if (sheet.tabIndex === 2) {
+              if (sheet.dates) d2 = Array.from({ length: 12 }, (_, i) => sheet.dates[i] || '');
+              t2 = Array.from({ length: targetCount }, (_, i) => {
+                const r = sheet.rows?.[i];
+                return {
+                  name: r?.name || '',
+                  absence: Array.from({ length: 12 }, (_, a) => r?.absence?.[a] || ''),
+                  hw: Array.from({ length: 4 }, (_, h) => r?.hw?.[h] || ''),
+                  ass: Array.from({ length: 4 }, (_, a) => r?.ass?.[a] || ''),
+                  exam: r?.exam || '',
+                };
+              });
+            }
+          });
+        }
+
+        // Global student names sync
+        for (let i = 0; i < targetCount; i++) {
+          const name = t0[i].name || t1[i].name || t2[i].name || '';
+          t0[i].name = name;
+          t1[i].name = name;
+          t2[i].name = name;
+        }
+
+        state.tab0Rows = t0;
+        state.tab1Rows = t1;
+        state.tab2Rows = t2;
+        state.tab1Dates = d1;
+        state.tab2Dates = d2;
+      } finally {
+        setTimeout(() => { isPopulating = false; }, 50);
+      }
+    }
+
+    function loadClassData(t, c, targetSize = state.pageSize) {
+      const key = 'grading_app_data_' + t + '_' + c;
+      if (state.masterDb.classesData && state.masterDb.classesData[key]) {
+        populateFromPayload(state.masterDb.classesData[key], targetSize);
+        return true;
+      }
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          populateFromPayload(parsed, targetSize);
+          return true;
+        }
+      } catch (e) {
+        console.warn('LocalStorage load error:', e);
+      }
+
+      // If empty class, initialize blank rows
+      const targetCount = targetSize * 2;
+      state.tab0Rows = createEmptyTab0Rows(targetCount);
+      state.tab1Rows = createEmptyMonthRows(targetCount);
+      state.tab2Rows = createEmptyMonthRows(targetCount);
+      state.tab1Dates = Array(12).fill('');
+      state.tab2Dates = Array(12).fill('');
+      return false;
+    }
+
+    async function saveMasterDatabase(currentPayload) {
+      const activeKey = getStorageKey(state.term, state.currentClass);
+      const payloadToSave = currentPayload || extractCurrentPayload(state.term, state.currentClass);
+
+      if (!state.masterDb.classesData) state.masterDb.classesData = {};
+      state.masterDb.classesData[activeKey] = payloadToSave;
+
+      state.masterDb.globalSettings = {
+        adminSchool: state.adminSchool,
+        teacher: state.teacher,
+        subject: state.subject,
+        year: state.year,
+        pageSize: state.pageSize,
+        lastTerm: state.term,
+        lastClass: state.currentClass,
+        customClasses: state.customClasses,
+      };
+
+      // 1. LocalStorage
+      try {
+        localStorage.setItem(activeKey, JSON.stringify(payloadToSave));
+        localStorage.setItem('grading_master_db', JSON.stringify(state.masterDb));
+      } catch (e) {
+        console.warn('LocalStorage save error:', e);
+      }
+
+      // 2. Folder Server Check
+      if (state.isFolderServerMode) {
+        try {
+          const resp = await fetch('/api/data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify(state.masterDb, null, 2),
+          });
+          if (resp.ok) return true;
+        } catch (e) {
+          console.warn('Folder server save error:', e);
+        }
+      }
+      return false;
+    }
+
+    function scheduleAutoSave() {
+      if (isPopulating) return;
+      const statusBadge = document.getElementById('autosave-status');
+      if (statusBadge) statusBadge.innerText = '⏳ جاري الحفظ...';
+
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(async () => {
+        const savedToDisk = await saveMasterDatabase();
+        state.autosaveStatus = savedToDisk ? '✓ تم الحفظ الدائم في الفولدر' : '✓ تم الحفظ محلياً';
+        const updatedBadge = document.getElementById('autosave-status');
+        if (updatedBadge) updatedBadge.innerText = state.autosaveStatus;
+      }, 400);
+    }
+
+    /* ==========================================================================
+       4. Render UI Components
+       ========================================================================== */
+    function updatePrintOrientation(isLandscape) {
+      let styleEl = document.getElementById('print-orientation-style');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'print-orientation-style';
+        document.head.appendChild(styleEl);
+      }
+      styleEl.innerHTML = '@page { size: A4 ' + (isLandscape ? 'landscape' : 'portrait') + '; margin: 5mm; }';
+    }
+
+    function switchTab(tabIndex) {
+      state.activeTab = tabIndex;
+      updatePrintOrientation(tabIndex !== 0);
+
+      document.getElementById('btn-tab-0').classList.toggle('active', tabIndex === 0);
+      document.getElementById('btn-tab-1').classList.toggle('active', tabIndex === 1);
+      document.getElementById('btn-tab-2').classList.toggle('active', tabIndex === 2);
+
+      updateTopBarLabels();
+      renderAppView();
+    }
+
+    function updateTopBarLabels() {
+      const month1Label = state.term === 'الاول' ? 'شهر أكتوبر' : 'شهر مارس';
+      const month2Label = state.term === 'الاول' ? 'شهر نوفمبر' : 'شهر أبريل';
+      document.getElementById('btn-tab-1').innerText = month1Label;
+      document.getElementById('btn-tab-2').innerText = month2Label;
+    }
+
+    function renderHeader(tabIndex) {
+      const defaultClasses = ['اول 1', 'اول 2', 'ثاني 1', 'ثاني 2', 'ثالث 1', 'ثالث 2'];
+      const allClasses = Array.from(new Set([...defaultClasses, ...state.customClasses]));
+
+      const monthName =
+        tabIndex === 1
+          ? (state.term === 'الاول' ? 'أكتوبر' : 'مارس')
+          : tabIndex === 2
+          ? (state.term === 'الاول' ? 'نوفمبر' : 'أبريل')
+          : '';
+
+      let classSelectOrBadge = '';
+      if (tabIndex === 0) {
+        let optionsHtml = '';
+        allClasses.forEach(cls => {
+          optionsHtml += `<option value="${cls}" ${state.currentClass === cls ? 'selected' : ''}>${cls}</option>`;
+        });
+        optionsHtml += `<option value="__custom__">+ إضافة فصل جديد...</option>`;
+
+        classSelectOrBadge = `
+          <div class="header-item">
+            <label>فصل (تحديد البيانات):</label>
+            <select class="header-class-name" onchange="handleClassChange(this.value)">
+              ${optionsHtml}
+            </select>
+          </div>
+        `;
+      } else {
+        classSelectOrBadge = `
+          <div class="header-item">
+            <label>الشهر:</label>
+            <input type="text" class="static-header-val" value="${monthName}" readonly style="background: #e0f2fe; text-align: center;" />
+          </div>
+          <div class="header-item">
+            <label>الفصل المختار:</label>
+            <input type="text" class="static-header-val" value="${state.currentClass}" readonly style="background: #e0f2fe; text-align: center;" />
+          </div>
+        `;
+      }
+
+      return `
+        <div class="sheet-header">
+          <div class="header-row">
+            <div class="header-item" style="flex: 2;">
+              <label>الإدارة والمدرسة:</label>
+              <input type="text" value="${state.adminSchool}" oninput="state.adminSchool = this.value; scheduleAutoSave(); syncPrintHeaders();" />
+            </div>
+            <div class="header-item">
+              <label>المعلم:</label>
+              <input type="text" value="${state.teacher}" oninput="state.teacher = this.value; scheduleAutoSave(); syncPrintHeaders();" />
+            </div>
+          </div>
+          <div class="header-row">
+            <div class="header-item">
+              <label>المادة:</label>
+              <input type="text" value="${state.subject}" oninput="state.subject = this.value; scheduleAutoSave(); syncPrintHeaders();" />
+            </div>
+            <div class="header-item">
+              <label>العام الدراسي:</label>
+              <input type="text" value="${state.year}" oninput="state.year = this.value; scheduleAutoSave(); syncPrintHeaders();" />
+            </div>
+            <div class="header-item">
+              <label>الفصل الدراسي:</label>
+              <select onchange="handleTermChange(this.value)">
+                <option value="الاول" ${state.term === 'الاول' ? 'selected' : ''}>الاول</option>
+                <option value="الثاني" ${state.term === 'الثاني' ? 'selected' : ''}>الثاني</option>
+              </select>
+            </div>
+            ${classSelectOrBadge}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPrintControlsBar(tabIndex) {
+      const p1End = state.pageSize;
+      const p2Start = state.pageSize + 1;
+      const p2End = state.pageSize * 2;
+
+      let subGroupContent = '';
+      if (tabIndex === 0) {
+        subGroupContent = `
+          <span class="autosave-badge" id="storage-mode-badge" style="background: ${state.isFolderServerMode ? '#d1fae5' : '#fef3c7'}; color: ${state.isFolderServerMode ? '#065f46' : '#92400e'}; font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 700;">
+            ${state.isFolderServerMode ? '🟢 حفظ دائم بالفولدر (database.json)' : '🟡 وضع المتصفح المباشر'}
+          </span>
+          <span class="autosave-badge" id="autosave-status">${state.autosaveStatus}</span>
+          <button type="button" class="btn-action btn-clear" style="padding: 3px 8px; font-size: 11px;" onclick="handleClearClassData()">
+            مسح بيانات الفصل
+          </button>
+        `;
+      } else {
+        subGroupContent = `
+          <span style="color: #0369a1; font-weight: 700;">
+            * انقر على زر 📅 لاختيار التاريخ ليظهر بدلاً منه. أدخل (غ) أو (y) للغياب. تُحسب المجاميع وتنتقل للنموذج الأول تلقائياً.
+          </span>
+        `;
+      }
+
+      return `
+        <div class="print-controls-bar">
+          <div class="controls-subgroup">
+            <span>إعدادات ترقيم وطباعة الصفحات:</span>
+            <label>
+              عدد الطلاب بالصفحة:
+              <input type="number" value="${state.pageSize}" min="5" max="60" onchange="handlePageSizeChange(this.value)" />
+            </label>
+            <span style="color: #0369a1; font-weight: 700;">
+              (ص1: 1 إلى ${p1End} | ص2: ${p2Start} إلى ${p2End})
+            </span>
+          </div>
+          <div class="controls-subgroup">
+            ${subGroupContent}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPrintSheetHeader(sheetTitle) {
+      return `
+        <div class="print-sheet-header">
+          <div class="print-header-top">
+            <div style="text-align: right;">
+              <div><span class="ph-admin-school">${state.adminSchool}</span></div>
+              <div>المعلم: <strong><span class="ph-teacher">${state.teacher}</span></strong> | المادة: <strong><span class="ph-subject">${state.subject}</span></strong></div>
+            </div>
+            <div style="text-align: center;">
+              <span class="print-title-badge">${sheetTitle}</span>
+              <div style="font-size: 9.5px; font-weight: 700; margin-top: 1px;">
+                العام الدراسي: <span class="ph-year">${state.year}</span> | الفصل الدراسي: <span class="ph-term">${state.term}</span>
+              </div>
+            </div>
+            <div style="text-align: left;">
+              <div>فصل: <strong><span class="ph-class">${state.currentClass}</span></strong></div>
+              <div style="font-size: 8.5px; color: #475569;">كشف رسمي للتقييم والرصد</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSignatures() {
+      return `
+        <div class="signatures-grid">
+          <div class="signature-box">
+            معلم المادة (د. مازن بدوي):<br /><br />...........................
+          </div>
+          <div class="signature-box">
+            الموجه الفني:<br /><br />...........................
+          </div>
+          <div class="signature-box">
+            مدير المدرسة:<br /><br />...........................
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTab0() {
+      const test1Name = state.term === 'الاول' ? 'اختبار شهر أكتوبر' : 'اختبار شهر مارس';
+      const test2Name = state.term === 'الاول' ? 'اختبار شهر نوفمبر' : 'اختبار شهر أبريل';
+      const pageSheetTitle = 'كشف درجات أعمال السنة والتقييم الشهري (المجمل)';
+
+      const activeDays1 = state.tab1Dates.filter(d => d && d.trim() !== '').length;
+      const activeDays2 = state.tab2Dates.filter(d => d && d.trim() !== '').length;
+
+      let pagesHtml = '';
+
+      for (let page = 0; page < 2; page++) {
+        const pageStartSeq = page === 0 ? 1 : state.pageSize + 1;
+        let rowsHtml = '';
+
+        for (let rIdx = 0; rIdx < state.pageSize; rIdx++) {
+          const globalSeq = pageStartSeq + rIdx;
+          const rowIndex = page * state.pageSize + rIdx;
+
+          const r0 = state.tab0Rows[rowIndex] || { name: '', notes: '' };
+          const r1 = state.tab1Rows[rowIndex] || { name: '', absence: [], hw: [], ass: [], exam: '' };
+          const r2 = state.tab2Rows[rowIndex] || { name: '', absence: [], hw: [], ass: [], exam: '' };
+
+          const studentName = r0.name || r1.name || r2.name || '';
+
+          // Deduce Month 1 values
+          const hasScore1 = r1.exam !== '' || r1.hw.some(h => h !== '') || r1.ass.some(a => a !== '');
+          const att1Str = calculateAttendanceScore(studentName, r1.absence || [], activeDays1, hasScore1);
+          const hw1Str = calculateHomeworkTotal(r1.hw || []);
+          const ass1Str = calculateAssessmentTotal(r1.ass || []);
+          const exam1 = r1.exam !== '' ? parseFloat(normalizeArabicDigits(r1.exam)) : null;
+
+          // Deduce Month 2 values
+          const hasScore2 = r2.exam !== '' || r2.hw.some(h => h !== '') || r2.ass.some(a => a !== '');
+          const att2Str = calculateAttendanceScore(studentName, r2.absence || [], activeDays2, hasScore2);
+          const hw2Str = calculateHomeworkTotal(r2.hw || []);
+          const ass2Str = calculateAssessmentTotal(r2.ass || []);
+          const exam2 = r2.exam !== '' ? parseFloat(normalizeArabicDigits(r2.exam)) : null;
+
+          const test1Score = exam1 !== null ? formatCleanScore(Math.min(15, Math.max(0, exam1))) : '';
+          const test2Score = exam2 !== null ? formatCleanScore(Math.min(15, Math.max(0, exam2))) : '';
+
+          let totalTests = '';
+          if (exam1 !== null || exam2 !== null) {
+            totalTests = formatCleanScore(Math.min(30, Math.max(0, (exam1 || 0) + (exam2 || 0))));
+          }
+
+          const att1 = att1Str !== '' ? parseFloat(att1Str) : null;
+          const att2 = att2Str !== '' ? parseFloat(att2Str) : null;
+          let avgAtt = '';
+          if (att1 !== null && att2 !== null) avgAtt = formatCleanScore((att1 + att2) / 2);
+          else if (att1 !== null) avgAtt = formatCleanScore(att1);
+          else if (att2 !== null) avgAtt = formatCleanScore(att2);
+
+          const hw1 = hw1Str !== '' ? parseFloat(hw1Str) : null;
+          const hw2 = hw2Str !== '' ? parseFloat(hw2Str) : null;
+          let avgHw = '';
+          if (hw1 !== null && hw2 !== null) avgHw = formatCleanScore((hw1 + hw2) / 2);
+          else if (hw1 !== null) avgHw = formatCleanScore(hw1);
+          else if (hw2 !== null) avgHw = formatCleanScore(hw2);
+
+          const ass1 = ass1Str !== '' ? parseFloat(ass1Str) : null;
+          const ass2 = ass2Str !== '' ? parseFloat(ass2Str) : null;
+          let avgAss = '';
+          if (ass1 !== null && ass2 !== null) avgAss = formatCleanScore((ass1 + ass2) / 2);
+          else if (ass1 !== null) avgAss = formatCleanScore(ass1);
+          else if (ass2 !== null) avgAss = formatCleanScore(ass2);
+
+          let grandTotal = '';
+          const hasAnyRealScore = totalTests !== '' || avgHw !== '' || avgAss !== '';
+          if (hasAnyRealScore) {
+            const sum =
+              (parseFloat(totalTests) || 0) +
+              (parseFloat(avgAtt) || 0) +
+              (parseFloat(avgHw) || 0) +
+              (parseFloat(avgAss) || 0);
+            grandTotal = formatCleanScore(Math.min(70, Math.max(0, sum)));
+          }
+
+          rowsHtml += `
+            <tr data-row="${rowIndex}">
+              <td class="row-index">${globalSeq}</td>
+              <td>
+                <input
+                  type="text"
+                  class="student-name"
+                  value="${escapeHtml(r0.name || '')}"
+                  oninput="updateStudentNameGlobally(${rowIndex}, this.value)"
+                  onkeydown="handleTableKeyDownNav(event)"
+                  onpaste="handleClipboardPaste(event, ${rowIndex}, 'name')"
+                />
+              </td>
+              <td class="calc-cell calc-test1">${test1Score}</td>
+              <td class="calc-cell calc-test2">${test2Score}</td>
+              <td class="calc-cell calc-total-tests">${totalTests}</td>
+              <td class="calc-cell calc-attendance">${avgAtt}</td>
+              <td class="calc-cell calc-hw">${avgHw}</td>
+              <td class="calc-cell calc-assessments">${avgAss}</td>
+              <td class="calc-cell grand-total-cell">${grandTotal}</td>
+              <td class="orig-score-cell"></td>
+              <td>
+                <input
+                  type="text"
+                  class="notes-input"
+                  value="${escapeHtml(r0.notes || '')}"
+                  oninput="updateTab0Notes(${rowIndex}, this.value)"
+                  onkeydown="handleTableKeyDownNav(event)"
+                />
+              </td>
+            </tr>
+          `;
+        }
+
+        pagesHtml += `
+          <div class="print-page">
+            ${renderPrintSheetHeader(pageSheetTitle)}
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2" style="width: 4%">م</th>
+                    <th rowspan="2" style="width: 25%">اسم الطالب</th>
+                    <th id="tab0-test1-header">${test1Name}</th>
+                    <th id="tab0-test2-header">${test2Name}</th>
+                    <th>مجموع الاختبارات</th>
+                    <th>متوسط المواظبة والسلوك</th>
+                    <th>مجموع الواجب<br />10</th>
+                    <th>متوسط التقييمات</th>
+                    <th>المجموع</th>
+                    <th>الدرجة الأصلية للمادة</th>
+                    <th>ملاحظات</th>
+                  </tr>
+                  <tr>
+                    <th>15</th>
+                    <th>15</th>
+                    <th>30</th>
+                    <th>10</th>
+                    <th>10</th>
+                    <th>20</th>
+                    <th>70</th>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody class="page-tbody" data-page="${page}">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+            ${renderSignatures()}
+            <div class="page-footer-pagination">
+              <span>الصفحة ${page + 1} من 2</span>
+              <span>كشف تقدير درجات مادة اللغة الإنجليزية - مدرسة الشهيد نجيب محي الشناوي للتعليم الأساسي</span>
+            </div>
+          </div>
+        `;
+      }
+
+      return `<div class="tab-portrait">${pagesHtml}</div>`;
+    }
+
+    function renderTabMonth(tabIndex) {
+      const monthTitle =
+        tabIndex === 1
+          ? (state.term === 'الاول' ? 'شهر أكتوبر' : 'شهر مارس')
+          : (state.term === 'الاول' ? 'شهر نوفمبر' : 'شهر أبريل');
+
+      const pageSheetTitle = `كشف رصد درجات أعمال السنة والغياب - تقييم ${monthTitle}`;
+      const dateLimits = getDateLimitsForTab(state.term, state.year, tabIndex);
+      const dates = tabIndex === 1 ? state.tab1Dates : state.tab2Dates;
+      const rows = tabIndex === 1 ? state.tab1Rows : state.tab2Rows;
+
+      const activeDaysCount = dates.filter(d => d && d.trim() !== '').length;
+
+      let pagesHtml = '';
+
+      for (let page = 0; page < 2; page++) {
+        const pageStartSeq = page === 0 ? 1 : state.pageSize + 1;
+        let rowsHtml = '';
+
+        for (let rIdx = 0; rIdx < state.pageSize; rIdx++) {
+          const globalSeq = pageStartSeq + rIdx;
+          const rowIndex = page * state.pageSize + rIdx;
+          const r = rows[rowIndex] || { name: '', absence: [], hw: [], ass: [], exam: '' };
+
+          const studentName = r.name || '';
+          const absences = r.absence || [];
+          const hw = r.hw || [];
+          const ass = r.ass || [];
+          const exam = r.exam || '';
+
+          const hasScore = exam !== '' || hw.some(h => h !== '') || ass.some(a => a !== '');
+          const attScore = calculateAttendanceScore(studentName, absences, activeDaysCount, hasScore);
+          const totalHw = calculateHomeworkTotal(hw);
+          const totalAss = calculateAssessmentTotal(ass);
+
+          let absenceTds = '';
+          for (let aIdx = 0; aIdx < 12; aIdx++) {
+            absenceTds += `
+              <td class="absence-cell">
+                <input
+                  type="text"
+                  class="absence-input"
+                  maxlength="1"
+                  value="${escapeHtml(absences[aIdx] || '')}"
+                  oninput="handleAbsenceInput(${tabIndex}, ${rowIndex}, ${aIdx}, this.value)"
+                  onkeydown="handleAbsenceKeyDown(event, ${tabIndex}, ${rowIndex}, ${aIdx})"
+                  onpaste="handleClipboardPaste(event, ${rowIndex}, 'absence', ${aIdx})"
+                />
+              </td>
+            `;
+          }
+
+          let hwTds = '';
+          for (let hIdx = 0; hIdx < 4; hIdx++) {
+            hwTds += `
+              <td>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  class="score-input"
+                  value="${escapeHtml(hw[hIdx] || '')}"
+                  oninput="handleScoreChange(${tabIndex}, ${rowIndex}, 'hw', ${hIdx}, this.value)"
+                  onkeydown="handleScoreKeyDown(event)"
+                  onpaste="handleClipboardPaste(event, ${rowIndex}, 'hw', ${hIdx})"
+                />
+              </td>
+            `;
+          }
+
+          let assTds = '';
+          for (let asIdx = 0; asIdx < 4; asIdx++) {
+            assTds += `
+              <td>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  class="score-input"
+                  value="${escapeHtml(ass[asIdx] || '')}"
+                  oninput="handleScoreChange(${tabIndex}, ${rowIndex}, 'ass', ${asIdx}, this.value)"
+                  onkeydown="handleScoreKeyDown(event)"
+                  onpaste="handleClipboardPaste(event, ${rowIndex}, 'ass', ${asIdx})"
+                />
+              </td>
+            `;
+          }
+
+          rowsHtml += `
+            <tr data-row="${rowIndex}">
+              <td class="row-index">${globalSeq}</td>
+              <td>
+                <input
+                  type="text"
+                  class="student-name"
+                  value="${escapeHtml(studentName)}"
+                  oninput="updateStudentNameGlobally(${rowIndex}, this.value)"
+                  onkeydown="handleTableKeyDownNav(event)"
+                  onpaste="handleClipboardPaste(event, ${rowIndex}, 'name')"
+                />
+              </td>
+              ${absenceTds}
+              <td class="calc-cell calc-attendance-score">${attScore}</td>
+              ${hwTds}
+              <td class="calc-cell calc-total-hw">${totalHw}</td>
+              ${assTds}
+              <td class="calc-cell calc-total-assessments">${totalAss}</td>
+              <td>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  class="score-input"
+                  value="${escapeHtml(exam)}"
+                  oninput="handleScoreChange(${tabIndex}, ${rowIndex}, 'exam', 0, this.value)"
+                  onkeydown="handleScoreKeyDown(event)"
+                  onpaste="handleClipboardPaste(event, ${rowIndex}, 'exam', 0)"
+                />
+              </td>
+            </tr>
+          `;
+        }
+
+        let dateHeadersHtml = '';
+        for (let colIdx = 0; colIdx < 12; colIdx++) {
+          const dateVal = dates[colIdx] || '';
+          let displayDate = '';
+          if (dateVal) {
+            const parts = dateVal.split('-');
+            if (parts.length === 3) displayDate = parts[2] + '/' + parts[1];
+          }
+
+          const buttonOrText = !displayDate
+            ? `<button type="button" class="btn-pick-date" onclick="triggerDatePicker(${tabIndex}, ${colIdx})" title="اختر تاريخ اليوم ${colIdx + 1}">📅</button>`
+            : `<span class="date-display-text" onclick="triggerDatePicker(${tabIndex}, ${colIdx})" title="انقر لتعديل التاريخ">${displayDate}</span>`;
+
+          dateHeadersHtml += `
+            <th class="absence-date-header" style="width: 3%">
+              <div class="date-picker-wrapper" data-col="${colIdx}">
+                ${buttonOrText}
+                <input
+                  type="date"
+                  id="date-picker-${tabIndex}-${colIdx}"
+                  class="absence-date-picker"
+                  min="${dateLimits.min}"
+                  max="${dateLimits.max}"
+                  value="${dateVal}"
+                  style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;"
+                  onchange="handleDateChange(${tabIndex}, ${colIdx}, this.value)"
+                />
+              </div>
+            </th>
+          `;
+        }
+
+        pagesHtml += `
+          <div class="print-page">
+            ${renderPrintSheetHeader(pageSheetTitle)}
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2" style="width: 3%">م</th>
+                    <th rowspan="2" style="width: 18%">اسم الطالب</th>
+                    <th colspan="12" class="absence-header-group">غياب الشهر (12 يوماً)</th>
+                    <th rowspan="2" style="width: 6%">مواظبة وسلوك<br />10</th>
+                    <th colspan="4">كراسة الواجب<br />2.5</th>
+                    <th rowspan="2" style="width: 6%">مجموع الواجب<br />10</th>
+                    <th colspan="4">التقييم الاسبوعي<br />5</th>
+                    <th rowspan="2" style="width: 6%">مجموع التقييم<br />20</th>
+                    <th rowspan="2" style="width: 6%">اختبار الشهر<br />15</th>
+                  </tr>
+                  <tr>
+                    ${dateHeadersHtml}
+                    <th>الأول</th><th>الثاني</th><th>الثالث</th><th>الرابع</th>
+                    <th>الأول</th><th>الثاني</th><th>الثالث</th><th>الرابع</th>
+                  </tr>
+                </thead>
+                <tbody class="page-tbody" data-page="${page}">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+            ${renderSignatures()}
+            <div class="page-footer-pagination">
+              <span>الصفحة ${page + 1} من 2</span>
+              <span>كشف تقدير درجات مادة اللغة الإنجليزية - مدرسة الشهيد نجيب محي الشناوي للتعليم الأساسي</span>
+            </div>
+          </div>
+        `;
+      }
+
+      return `<div class="tab-landscape ${!state.isEditModeUnlocked ? 'locked-tab' : ''}">${pagesHtml}</div>`;
+    }
+
+    function renderAppView() {
+      const container = document.getElementById('tabContentArea');
+      if (!container) return;
+
+      let html = '';
+      if (state.activeTab === 0) {
+        html = `
+          <div class="tab-content" id="tab-0">
+            ${renderHeader(0)}
+            ${renderPrintControlsBar(0)}
+            ${renderTab0()}
+          </div>
+        `;
+      } else if (state.activeTab === 1) {
+        html = `
+          <div class="tab-content" id="tab-1">
+            ${renderHeader(1)}
+            ${renderPrintControlsBar(1)}
+            ${renderTabMonth(1)}
+          </div>
+        `;
+      } else if (state.activeTab === 2) {
+        html = `
+          <div class="tab-content" id="tab-2">
+            ${renderHeader(2)}
+            ${renderPrintControlsBar(2)}
+            ${renderTabMonth(2)}
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+      syncPrintHeaders();
+    }
+
+    function syncPrintHeaders() {
+      document.querySelectorAll('.ph-admin-school').forEach(el => el.innerText = state.adminSchool);
+      document.querySelectorAll('.ph-teacher').forEach(el => el.innerText = state.teacher);
+      document.querySelectorAll('.ph-subject').forEach(el => el.innerText = state.subject);
+      document.querySelectorAll('.ph-year').forEach(el => el.innerText = state.year);
+      document.querySelectorAll('.ph-term').forEach(el => el.innerText = state.term);
+      document.querySelectorAll('.ph-class').forEach(el => el.innerText = state.currentClass);
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    /* ==========================================================================
+       5. Interactive Actions & Event Handlers
+       ========================================================================== */
+    function updateStudentNameGlobally(rowIndex, val) {
+      if (state.tab0Rows[rowIndex]) state.tab0Rows[rowIndex].name = val;
+      if (state.tab1Rows[rowIndex]) state.tab1Rows[rowIndex].name = val;
+      if (state.tab2Rows[rowIndex]) state.tab2Rows[rowIndex].name = val;
+
+      // Update input fields in current DOM without full re-render
+      document.querySelectorAll(`tr[data-row="${rowIndex}"] .student-name`).forEach(input => {
+        if (input.value !== val) input.value = val;
+      });
+
+      scheduleAutoSave();
+    }
+
+    function updateTab0Notes(rowIndex, val) {
+      if (state.tab0Rows[rowIndex]) state.tab0Rows[rowIndex].notes = val;
+      scheduleAutoSave();
+    }
+
+    function handleAbsenceInput(tabIndex, rowIndex, colIdx, rawVal) {
+      const val = rawVal.trim();
+      const clean = val === 'غ' || val.toLowerCase() === 'y' ? 'غ' : '';
+      const rows = tabIndex === 1 ? state.tab1Rows : state.tab2Rows;
+      if (!rows[rowIndex]) return;
+
+      if (!rows[rowIndex].absence) rows[rowIndex].absence = Array(12).fill('');
+      rows[rowIndex].absence[colIdx] = clean;
+
+      // Recompute and update live cell
+      const dates = tabIndex === 1 ? state.tab1Dates : state.tab2Dates;
+      const activeDays = dates.filter(d => d && d.trim() !== '').length;
+      const r = rows[rowIndex];
+      const hasScore = r.exam !== '' || r.hw.some(h => h !== '') || r.ass.some(a => a !== '');
+      const attScore = calculateAttendanceScore(r.name || '', r.absence, activeDays, hasScore);
+
+      const tr = document.querySelector(`tr[data-row="${rowIndex}"]`);
+      if (tr) {
+        const attCell = tr.querySelector('.calc-attendance-score');
+        if (attCell) attCell.innerText = attScore;
+      }
+
+      scheduleAutoSave();
+    }
+
+    function handleAbsenceKeyDown(e, tabIndex, rowIndex, colIdx) {
+      handleTableKeyDownNav(e);
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+
+      const allowed = ['Backspace', 'Tab', 'Enter', 'Delete', 'Escape'];
+      if (allowed.includes(e.key)) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+          setTimeout(() => handleAbsenceInput(tabIndex, rowIndex, colIdx, ''), 10);
+        }
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey) return;
+
+      if (e.key === 'y' || e.key === 'Y' || e.key === 'غ') {
+        e.preventDefault();
+        e.currentTarget.value = 'غ';
+        handleAbsenceInput(tabIndex, rowIndex, colIdx, 'غ');
+
+        // Automatically advance to the next absence day cell
+        const nextTd = e.currentTarget.closest('td')?.nextElementSibling;
+        const nextInput = nextTd?.querySelector('.absence-input');
+        if (nextInput) {
+          nextInput.focus();
+          nextInput.select();
+        }
+        return;
+      }
+
+      if (e.key === ' ') {
+        e.preventDefault();
+        e.currentTarget.value = '';
+        handleAbsenceInput(tabIndex, rowIndex, colIdx, '');
+        return;
+      }
+
+      e.preventDefault();
+    }
+
+    function handleScoreKeyDown(e) {
+      handleTableKeyDownNav(e);
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+
+      const allowed = ['Backspace', 'Tab', 'Enter', 'Delete', 'Escape'];
+      if (allowed.includes(e.key)) return;
+      if (e.ctrlKey || e.metaKey) return;
+
+      const isDigit = /^[0-9٠-٩]$/.test(e.key);
+      const isDecimal = ['.', ',', '،'].includes(e.key);
+
+      if (isDecimal) {
+        if (e.currentTarget.value.includes('.') || e.currentTarget.value.includes(',') || e.currentTarget.value.includes('،')) {
+          e.preventDefault();
+        }
+        return;
+      }
+
+      if (!isDigit) {
+        e.preventDefault();
+      }
+    }
+
+    function handleScoreChange(tabIndex, rowIndex, type, subIndex, rawVal) {
+      let val = normalizeArabicDigits(rawVal).replace(/[^0-9.]/g, '');
+      const parts = val.split('.');
+      if (parts.length > 2) {
+        val = parts[0] + '.' + parts.slice(1).join('');
+      }
+
+      const num = parseFloat(val);
+      const maxVal = type === 'hw' ? 2.5 : type === 'ass' ? 5 : 15;
+      if (!isNaN(num)) {
+        if (num > maxVal) val = maxVal.toString();
+        else if (num < 0) val = '0';
+      }
+
+      const rows = tabIndex === 1 ? state.tab1Rows : state.tab2Rows;
+      if (!rows[rowIndex]) return;
+
+      if (type === 'hw') {
+        if (!rows[rowIndex].hw) rows[rowIndex].hw = Array(4).fill('');
+        rows[rowIndex].hw[subIndex] = val;
+      } else if (type === 'ass') {
+        if (!rows[rowIndex].ass) rows[rowIndex].ass = Array(4).fill('');
+        rows[rowIndex].ass[subIndex] = val;
+      } else if (type === 'exam') {
+        rows[rowIndex].exam = val;
+      }
+
+      // Recompute and update live row calculations
+      const r = rows[rowIndex];
+      const dates = tabIndex === 1 ? state.tab1Dates : state.tab2Dates;
+      const activeDays = dates.filter(d => d && d.trim() !== '').length;
+      const hasScore = r.exam !== '' || r.hw.some(h => h !== '') || r.ass.some(a => a !== '');
+      const attScore = calculateAttendanceScore(r.name || '', r.absence || [], activeDays, hasScore);
+      const totalHw = calculateHomeworkTotal(r.hw || []);
+      const totalAss = calculateAssessmentTotal(r.ass || []);
+
+      const tr = document.querySelector(`tr[data-row="${rowIndex}"]`);
+      if (tr) {
+        const attCell = tr.querySelector('.calc-attendance-score');
+        if (attCell) attCell.innerText = attScore;
+
+        const hwCell = tr.querySelector('.calc-total-hw');
+        if (hwCell) hwCell.innerText = totalHw;
+
+        const assCell = tr.querySelector('.calc-total-assessments');
+        if (assCell) assCell.innerText = totalAss;
+      }
+
+      scheduleAutoSave();
+    }
+
+    function triggerDatePicker(tabIndex, colIdx) {
+      const picker = document.getElementById(`date-picker-${tabIndex}-${colIdx}`);
+      if (picker) {
+        if (typeof picker.showPicker === 'function') {
+          picker.showPicker();
+        } else {
+          picker.focus();
+          picker.click();
+        }
+      }
+    }
+
+    function handleDateChange(tabIndex, colIdx, dateVal) {
+      if (tabIndex === 1) state.tab1Dates[colIdx] = dateVal;
+      else state.tab2Dates[colIdx] = dateVal;
+
+      scheduleAutoSave();
+      renderAppView();
+    }
+
+    async function handleClassChange(selectedVal) {
+      if (!selectedVal) return;
+      let targetClass = selectedVal;
+
+      if (selectedVal === '__custom__') {
+        const newClass = prompt('أدخل اسم الفصل الجديد (مثال: اول 3 أو ثالث 2):');
+        if (newClass && newClass.trim()) {
+          const trimmed = newClass.trim();
+          targetClass = trimmed;
+          state.customClasses = Array.from(new Set([...state.customClasses, trimmed]));
+        } else {
+          renderAppView();
+          return;
+        }
+      }
+
+      await saveMasterDatabase();
+      state.currentClass = targetClass;
+      loadClassData(state.term, targetClass, state.pageSize);
+      renderAppView();
+    }
+
+    async function handleTermChange(newTerm) {
+      if (newTerm === state.term) return;
+      await saveMasterDatabase();
+      state.term = newTerm;
+      loadClassData(newTerm, state.currentClass, state.pageSize);
+      updateTopBarLabels();
+      renderAppView();
+    }
+
+    function handlePageSizeChange(newSize) {
+      const size = Math.min(60, Math.max(5, parseInt(newSize) || 25));
+      state.pageSize = size;
+      const targetCount = size * 2;
+
+      const newT0 = createEmptyTab0Rows(targetCount);
+      for (let i = 0; i < Math.min(state.tab0Rows.length, targetCount); i++) newT0[i] = state.tab0Rows[i];
+      state.tab0Rows = newT0;
+
+      const newT1 = createEmptyMonthRows(targetCount);
+      for (let i = 0; i < Math.min(state.tab1Rows.length, targetCount); i++) newT1[i] = state.tab1Rows[i];
+      state.tab1Rows = newT1;
+
+      const newT2 = createEmptyMonthRows(targetCount);
+      for (let i = 0; i < Math.min(state.tab2Rows.length, targetCount); i++) newT2[i] = state.tab2Rows[i];
+      state.tab2Rows = newT2;
+
+      scheduleAutoSave();
+      renderAppView();
+    }
+
+    function handleClearClassData() {
+      if (confirm(`هل أنت متأكد من مسح جميع بيانات الفصل الحالي (${state.currentClass}) بالكامل؟ سيتم تفريغ الأسماء وكافة الدرجات وحسابات الخلايا.`)) {
+        const key = getStorageKey(state.term, state.currentClass);
+        try { localStorage.removeItem(key); } catch (e) {}
+
+        if (state.masterDb.classesData) {
+          delete state.masterDb.classesData[key];
+          saveMasterDatabase();
+        }
+
+        const targetCount = state.pageSize * 2;
+        state.tab0Rows = createEmptyTab0Rows(targetCount);
+        state.tab1Rows = createEmptyMonthRows(targetCount);
+        state.tab2Rows = createEmptyMonthRows(targetCount);
+        state.tab1Dates = Array(12).fill('');
+        state.tab2Dates = Array(12).fill('');
+
+        showToast(`تم مسح بيانات الفصل (${state.currentClass}) بالكامل وتفريغ الخانات.`, 'info');
+        renderAppView();
+      }
+    }
+
+    function toggleEditMode() {
+      state.isEditModeUnlocked = !state.isEditModeUnlocked;
+      const btn = document.getElementById('btn-toggle-edit');
+      if (btn) {
+        btn.classList.toggle('unlocked', !state.isEditModeUnlocked);
+        btn.innerText = state.isEditModeUnlocked ? '🔓 تعديل الشهور: متاح' : '🔒 تعديل الشهور: مقفل';
+      }
+      showToast(
+        state.isEditModeUnlocked ? 'تم إتاحة تعديل كشوف الشهور الآن.' : 'تم قفل كشوف الشهور لحماية البيانات من التعديل.',
+        state.isEditModeUnlocked ? 'info' : 'warning'
+      );
+      renderAppView();
+    }
+
+    function toggleTopBarVisibility() {
+      state.hiddenUI = !state.hiddenUI;
+      document.getElementById('topBar').classList.toggle('hidden-ui', state.hiddenUI);
+    }
+
+    function adjustZoom(amount) {
+      state.zoom = Math.round(Math.min(1.4, Math.max(0.6, state.zoom + amount)) * 10) / 10;
+      document.getElementById('mainWrapper').style.transform = `scale(${state.zoom})`;
+      showToast(`مستوى التكبير: ${Math.round(state.zoom * 100)}%`, 'info');
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    function handleTriggerPrint() {
+      updatePrintOrientation(state.activeTab !== 0);
+      setTimeout(() => { window.print(); }, 120);
+    }
+
+    function handleExitApplication() {
+      if (confirm('هل تريد حفظ البيانات وإغلاق البرنامج؟')) {
+        saveMasterDatabase().then(() => {
+          if (state.isFolderServerMode) {
+            fetch('/api/exit', { method: 'POST' });
+            setTimeout(() => { window.close(); }, 300);
+          } else {
+            window.close();
+          }
+        });
+      }
+    }
+
+    async function handleForceSaveToFolder() {
+      const saved = await saveMasterDatabase();
+      if (saved) {
+        showToast('✓ تم حفظ جميع البيانات بنجاح في ملف database.json داخل الفولدر!', 'success');
+      } else {
+        showToast('تم الحفظ في الذاكرة المحلية (localStorage). للحفظ الدائم داخل الفولدر، يرجى تشغيل الخادم.', 'info');
+      }
+    }
+
+    async function handleOpenAppFolder() {
+      if (state.isFolderServerMode) {
+        try {
+          await fetch('/api/open-folder', { method: 'POST' });
+          showToast('مجلد البرنامج مفتوح وقيد التشغيل على الخادم المحلي.', 'info');
+        } catch (e) {
+          showToast('تعذر فتح المجلد.', 'error');
+        }
+      } else {
+        showToast('أنت تعمل في وضع المتصفح المباشر. البيانات محفوظة في المتصفح.', 'info');
+      }
+    }
+
+    async function handleCreateDatabaseBackup() {
+      await saveMasterDatabase();
+      if (state.isFolderServerMode) {
+        try {
+          const r = await fetch('/api/backup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state.masterDb),
+          });
+          const res = await r.json();
+          showToast(`تم إنشاء نسخة احتياطية جديدة بنجاح: ${res.filename || ''}`, 'success');
+          return;
+        } catch (e) {}
+      }
+
+      // Client-side JSON download
+      const blob = new Blob([JSON.stringify(state.masterDb, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `EnglishGradingBackup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      showToast('تم تنزيل نسخة احتياطية من ملف قاعدة البيانات (database.json)', 'success');
+    }
+
+    function handleRestoreDatabaseBackup(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const content = event.target?.result;
+          const parsed = JSON.parse(content);
+          if (parsed && (parsed.classesData || parsed.globalSettings)) {
+            state.masterDb = parsed;
+            const g = parsed.globalSettings;
+            if (g) {
+              if (g.adminSchool) state.adminSchool = g.adminSchool;
+              if (g.teacher) state.teacher = g.teacher;
+              if (g.subject) state.subject = g.subject;
+              if (g.year) state.year = g.year;
+              if (g.pageSize) state.pageSize = g.pageSize;
+              if (g.customClasses) state.customClasses = g.customClasses;
+              const targetTerm = g.lastTerm || state.term;
+              const targetClass = g.lastClass || state.currentClass;
+              state.term = targetTerm;
+              state.currentClass = targetClass;
+              loadClassData(targetTerm, targetClass, g.pageSize || state.pageSize);
+            }
+            await saveMasterDatabase();
+            updateTopBarLabels();
+            renderAppView();
+            showToast('✓ تم استعادة النسخة الاحتياطية بنجاح وتحديث كافة الكشوف والصفوف!', 'success');
+          } else {
+            showToast('ملف النسخة الاحتياطية غير صالح أو غير متطابق.', 'error');
+          }
+        } catch (err) {
+          showToast('تعذر قراءة ملف النسخة الاحتياطية: ' + err.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    /* ==========================================================================
+       6. Arrow Navigation & Multi-Cell Clipboard Paste
+       ========================================================================== */
+    function handleTableKeyDownNav(e) {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+
+      const currentInput = e.currentTarget;
+      const cell = currentInput.closest('td, th');
+      const row = currentInput.closest('tr');
+      if (!cell || !row) return;
+
+      const cellIndex = Array.from(row.children).indexOf(cell);
+      let targetRow = null;
+
+      if (e.key === 'ArrowUp') {
+        targetRow = row.previousElementSibling;
+        if (!targetRow) {
+          const prevPage = row.closest('.print-page')?.previousElementSibling;
+          if (prevPage) {
+            const rows = prevPage.querySelectorAll('tbody tr');
+            targetRow = rows[rows.length - 1] || null;
+          }
+        }
+      } else if (e.key === 'ArrowDown') {
+        targetRow = row.nextElementSibling;
+        if (!targetRow) {
+          const nextPage = row.closest('.print-page')?.nextElementSibling;
+          if (nextPage) {
+            const rows = nextPage.querySelectorAll('tbody tr');
+            targetRow = rows[0] || null;
+          }
+        }
+      } else if (e.key === 'ArrowLeft') {
+        const nextCell = cell.nextElementSibling;
+        if (nextCell) {
+          const nextInput = nextCell.querySelector('input');
+          if (nextInput) {
+            e.preventDefault();
+            nextInput.focus();
+            if (nextInput.type === 'text') nextInput.select();
+          }
+        }
+        return;
+      } else if (e.key === 'ArrowRight') {
+        const prevCell = cell.previousElementSibling;
+        if (prevCell) {
+          const prevInput = prevCell.querySelector('input');
+          if (prevInput) {
+            e.preventDefault();
+            prevInput.focus();
+            if (prevInput.type === 'text') prevInput.select();
+          }
+        }
+        return;
+      }
+
+      if (targetRow) {
+        const targetCell = targetRow.children[cellIndex];
+        if (targetCell) {
+          const targetInput = targetCell.querySelector('input');
+          if (targetInput) {
+            e.preventDefault();
+            targetInput.focus();
+            if (targetInput.type === 'text') targetInput.select();
+          }
+        }
+      }
+    }
+
+    function handleClipboardPaste(e, startRowIndex, colType, subIndex = 0) {
+      const text = e.clipboardData?.getData('text');
+      if (!text) return;
+
+      const hasMultipleLines = text.includes('\n') || text.includes('\r');
+      const hasTabs = text.includes('\t');
+
+      if (colType === 'absence' && !hasMultipleLines && !hasTabs) {
+        e.preventDefault();
+        const clean = text.trim() === 'غ' || text.trim().toLowerCase() === 'y' ? 'غ' : '';
+        handleAbsenceInput(state.activeTab, startRowIndex, subIndex, clean);
+        e.currentTarget.value = clean;
+        return;
+      }
+
+      if (!hasMultipleLines && !hasTabs) return;
+
+      e.preventDefault();
+      const lines = text.split(/\r\n|\n|\r/).filter((l, idx, arr) => idx < arr.length - 1 || l.trim() !== '');
+      if (lines.length === 0) return;
+
+      const totalRowsCount = state.pageSize * 2;
+
+      if (colType === 'name') {
+        lines.forEach((line, rOffset) => {
+          const targetIdx = startRowIndex + rOffset;
+          if (targetIdx < totalRowsCount) {
+            const cells = line.split('\t');
+            const newName = cells[0]?.trim() || '';
+            updateStudentNameGlobally(targetIdx, newName);
+          }
+        });
+      } else if (colType === 'absence') {
+        const rows = state.activeTab === 1 ? state.tab1Rows : state.tab2Rows;
+        lines.forEach((line, rOffset) => {
+          const targetIdx = startRowIndex + rOffset;
+          if (targetIdx < totalRowsCount && rows[targetIdx]) {
+            const cells = line.split('\t');
+            if (!rows[targetIdx].absence) rows[targetIdx].absence = Array(12).fill('');
+            cells.forEach((val, cOffset) => {
+              const targetCol = subIndex + cOffset;
+              if (targetCol < 12) {
+                const trimmed = val.trim();
+                rows[targetIdx].absence[targetCol] = trimmed === 'غ' || trimmed.toLowerCase() === 'y' ? 'غ' : '';
+              }
+            });
+          }
+        });
+      } else if (colType === 'hw' || colType === 'ass' || colType === 'exam') {
+        const rows = state.activeTab === 1 ? state.tab1Rows : state.tab2Rows;
+        lines.forEach((line, rOffset) => {
+          const targetIdx = startRowIndex + rOffset;
+          if (targetIdx < totalRowsCount && rows[targetIdx]) {
+            const cells = line.split('\t');
+            cells.forEach((val, cOffset) => {
+              const cleanNum = normalizeArabicDigits(val.trim()).replace(/[^0-9.]/g, '');
+              if (colType === 'hw') {
+                const targetCol = subIndex + cOffset;
+                if (targetCol < 4) {
+                  if (!rows[targetIdx].hw) rows[targetIdx].hw = Array(4).fill('');
+                  rows[targetIdx].hw[targetCol] = cleanNum;
+                }
+              } else if (colType === 'ass') {
+                const targetCol = subIndex + cOffset;
+                if (targetCol < 4) {
+                  if (!rows[targetIdx].ass) rows[targetIdx].ass = Array(4).fill('');
+                  rows[targetIdx].ass[targetCol] = cleanNum;
+                }
+              } else if (colType === 'exam') {
+                rows[targetIdx].exam = cleanNum;
+              }
+            });
+          }
+        });
+      }
+
+      scheduleAutoSave();
+      renderAppView();
+      showToast(`تم لصق وتوزيع ${lines.length} صفاً من بيانات الإكسل بنجاح!`, 'success');
+    }
+
+    /* ==========================================================================
+       7. Excel Export & Import (Online SheetJS & Offline Fallback)
+       ========================================================================== */
+    function handleExcelExport() {
+      const safeClass = state.currentClass.replace(/\s+/g, '_');
+      const test1Name = state.term === "الاول" ? "اختبار شهر أكتوبر" : "اختبار شهر مارس";
+      const test2Name = state.term === "الاول" ? "اختبار شهر نوفمبر" : "اختبار شهر أبريل";
+      const month1Name = state.term === "الاول" ? "أكتوبر" : "مارس";
+      const month2Name = state.term === "الاول" ? "نوفمبر" : "أبريل";
+
+      const maxRows = Math.max(state.tab0Rows.length, state.tab1Rows.length, state.tab2Rows.length, 50);
+      const activeDays1 = state.tab1Dates.filter(d => d && d.trim() !== '').length;
+      const activeDays2 = state.tab2Dates.filter(d => d && d.trim() !== '').length;
+
+      // Tab 0 Data
+      const tab0Headers = [
+        'م',
+        'اسم الطالب',
+        `${test1Name} (15)`,
+        `${test2Name} (15)`,
+        'مجموع الاختبارات (30)',
+        'متوسط المواظبة والسلوك (10)',
+        'مجموع الواجب (10)',
+        'متوسط التقييمات (20)',
+        'المجموع (70)',
+        'الدرجة الأصلية للمادة',
+        'ملاحظات',
+      ];
+      const tab0Data = [tab0Headers];
+
+      for (let i = 0; i < maxRows; i++) {
+        const r0 = state.tab0Rows[i] || { name: '', notes: '' };
+        const r1 = state.tab1Rows[i] || { name: '', absence: [], hw: [], ass: [], exam: '' };
+        const r2 = state.tab2Rows[i] || { name: '', absence: [], hw: [], ass: [], exam: '' };
+
+        const studentName = r0.name || r1.name || r2.name || '';
+        if (!studentName && !r0.notes && (!r1.absence || r1.absence.every(a => !a)) && (!r2.absence || r2.absence.every(a => !a))) {
+          tab0Data.push([i + 1, '', '', '', '', '', '', '', '', '', '']);
+          continue;
+        }
+
+        const hasScore1 = r1.exam !== '' || r1.hw.some(h => h !== '') || r1.ass.some(a => a !== '');
+        const att1Str = calculateAttendanceScore(studentName, r1.absence || [], activeDays1, hasScore1);
+        const hw1Str = calculateHomeworkTotal(r1.hw || []);
+        const ass1Str = calculateAssessmentTotal(r1.ass || []);
+        const exam1 = r1.exam !== '' ? parseFloat(normalizeArabicDigits(r1.exam)) : null;
+
+        const hasScore2 = r2.exam !== '' || r2.hw.some(h => h !== '') || r2.ass.some(a => a !== '');
+        const att2Str = calculateAttendanceScore(studentName, r2.absence || [], activeDays2, hasScore2);
+        const hw2Str = calculateHomeworkTotal(r2.hw || []);
+        const ass2Str = calculateAssessmentTotal(r2.ass || []);
+        const exam2 = r2.exam !== '' ? parseFloat(normalizeArabicDigits(r2.exam)) : null;
+
+        let totalTests = '';
+        if (exam1 !== null || exam2 !== null) totalTests = formatCleanScore((exam1 || 0) + (exam2 || 0));
+
+        const att1 = att1Str !== '' ? parseFloat(att1Str) : null;
+        const att2 = att2Str !== '' ? parseFloat(att2Str) : null;
+        let avgAtt = '';
+        if (att1 !== null && att2 !== null) avgAtt = formatCleanScore((att1 + att2) / 2);
+        else if (att1 !== null) avgAtt = formatCleanScore(att1);
+        else if (att2 !== null) avgAtt = formatCleanScore(att2);
+
+        const hw1 = hw1Str !== '' ? parseFloat(hw1Str) : null;
+        const hw2 = hw2Str !== '' ? parseFloat(hw2Str) : null;
+        let avgHw = '';
+        if (hw1 !== null && hw2 !== null) avgHw = formatCleanScore((hw1 + hw2) / 2);
+        else if (hw1 !== null) avgHw = formatCleanScore(hw1);
+        else if (hw2 !== null) avgHw = formatCleanScore(hw2);
+
+        const ass1 = ass1Str !== '' ? parseFloat(ass1Str) : null;
+        const ass2 = ass2Str !== '' ? parseFloat(ass2Str) : null;
+        let avgAss = '';
+        if (ass1 !== null && ass2 !== null) avgAss = formatCleanScore((ass1 + ass2) / 2);
+        else if (ass1 !== null) avgAss = formatCleanScore(ass1);
+        else if (ass2 !== null) avgAss = formatCleanScore(ass2);
+
+        let grandTotal = '';
+        const hasAnyRealScore = totalTests !== '' || avgHw !== '' || avgAss !== '';
+        if (hasAnyRealScore) {
+          const sum = (parseFloat(totalTests) || 0) + (parseFloat(avgAtt) || 0) + (parseFloat(avgHw) || 0) + (parseFloat(avgAss) || 0);
+          grandTotal = formatCleanScore(Math.min(70, Math.max(0, sum)));
+        }
+
+        tab0Data.push([
+          i + 1,
+          studentName,
+          exam1 !== null ? formatCleanScore(exam1) : '',
+          exam2 !== null ? formatCleanScore(exam2) : '',
+          totalTests,
+          avgAtt,
+          avgHw,
+          avgAss,
+          grandTotal,
+          '',
+          r0.notes || '',
+        ]);
+      }
+
+      // Monthly Data Generator
+      const generateMonthData = (rows, dates, activeDays) => {
+        const headers = [
+          'م',
+          'اسم الطالب',
+          ...Array.from({ length: 12 }, (_, idx) => dates[idx] || `يوم ${idx + 1}`),
+          'مواظبة وسلوك (10)',
+          'واجب 1', 'واجب 2', 'واجب 3', 'واجب 4',
+          'مجموع الواجب (10)',
+          'تقييم 1', 'تقييم 2', 'تقييم 3', 'تقييم 4',
+          'مجموع التقييم (20)',
+          'اختبار الشهر (15)',
+        ];
+        const data = [headers];
+        for (let i = 0; i < maxRows; i++) {
+          const r = rows[i] || { name: '', absence: [], hw: [], ass: [], exam: '' };
+          const sName = r.name || '';
+          const absences = Array.from({ length: 12 }, (_, dIdx) => r.absence?.[dIdx] || '');
+          const hw = Array.from({ length: 4 }, (_, hIdx) => r.hw?.[hIdx] || '');
+          const ass = Array.from({ length: 4 }, (_, aIdx) => r.ass?.[aIdx] || '');
+          const exam = r.exam || '';
+
+          const hasScore = exam !== '' || hw.some(h => h !== '') || ass.some(a => a !== '');
+          const att = calculateAttendanceScore(sName, absences, activeDays, hasScore);
+          const totalHw = calculateHomeworkTotal(hw);
+          const totalAss = calculateAssessmentTotal(ass);
+
+          data.push([
+            i + 1,
+            sName,
+            ...absences,
+            att,
+            ...hw,
+            totalHw,
+            ...ass,
+            totalAss,
+            exam,
+          ]);
+        }
+        return data;
+      };
+
+      const month1Data = generateMonthData(state.tab1Rows, state.tab1Dates, activeDays1);
+      const month2Data = generateMonthData(state.tab2Rows, state.tab2Dates, activeDays2);
+
+      // Check if SheetJS XLSX is available
+      if (typeof XLSX !== 'undefined') {
+        const wb = XLSX.utils.book_new();
+        const ws0 = XLSX.utils.aoa_to_sheet(tab0Data);
+        XLSX.utils.book_append_sheet(wb, ws0, `النموذج_الأول_${safeClass}`);
+
+        const ws1 = XLSX.utils.aoa_to_sheet(month1Data);
+        XLSX.utils.book_append_sheet(wb, ws1, `${month1Name}_${safeClass}`);
+
+        const ws2 = XLSX.utils.aoa_to_sheet(month2Data);
+        XLSX.utils.book_append_sheet(wb, ws2, `${month2Name}_${safeClass}`);
+
+        const fileName = `كشوف_درجات_${safeClass}_الترم_${state.term}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        showToast(`تم تصدير ملف الإكسل (${fileName}) بنجاح!`, 'success');
+      } else {
+        // Offline Excel Fallback (XML Spreadsheet format compatible with Excel)
+        const generateTableHtml = (data) => {
+          let rowsHtml = '';
+          data.forEach(row => {
+            rowsHtml += '<tr>' + row.map(cell => `<td>${escapeHtml(cell)}</td>`).join('') + '</tr>';
+          });
+          return `<table border="1">${rowsHtml}</table>`;
+        };
+
+        const excelContent = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+          <head><meta charset="utf-8" /></head>
+          <body dir="rtl">
+            <h3>النموذج الأول (المجمل) - ${state.currentClass}</h3>
+            ${generateTableHtml(tab0Data)}
+            <br />
+            <h3>تقييم ${month1Name} - ${state.currentClass}</h3>
+            ${generateTableHtml(month1Data)}
+            <br />
+            <h3>تقييم ${month2Name} - ${state.currentClass}</h3>
+            ${generateTableHtml(month2Data)}
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `كشوف_درجات_${safeClass}_الترم_${state.term}.xls`;
+        a.click();
+        showToast(`تم تصدير كشوف الإكسل (${safeClass}) بنجاح!`, 'success');
+      }
+    }
+
+    function handleExcelImport(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (typeof XLSX === 'undefined') {
+        showToast('مكتبة استيراد الإكسل تتطلب اتصالاً بالإنترنت لتشغيل التحليل.', 'warning');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          workbook.SheetNames.forEach((sheetName, sIdx) => {
+            if (sIdx > 2) return;
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            if (!json || json.length === 0) return;
+
+            if (sIdx === 0) {
+              const rows = [];
+              for (let i = 1; i < json.length; i++) {
+                const r = json[i] || [];
+                rows.push({
+                  name: r[1] ? String(r[1]).trim() : '',
+                  notes: r[10] ? String(r[10]).trim() : '',
+                });
+              }
+              state.tab0Rows = rows;
+            } else if (sIdx === 1 || sIdx === 2) {
+              const headerRow = json[0] || [];
+              const dates = [];
+              for (let c = 0; c < 12; c++) {
+                const dVal = headerRow[c + 2];
+                dates.push(dVal ? String(dVal).trim() : '');
+              }
+
+              const rows = [];
+              for (let i = 1; i < json.length; i++) {
+                const r = json[i] || [];
+                const absence = [];
+                for (let a = 0; a < 12; a++) {
+                  const val = r[a + 2];
+                  absence.push(val !== undefined && val !== null ? String(val).trim() : '');
+                }
+                const hw = [
+                  r[15] !== undefined ? String(r[15]).trim() : '',
+                  r[16] !== undefined ? String(r[16]).trim() : '',
+                  r[17] !== undefined ? String(r[17]).trim() : '',
+                  r[18] !== undefined ? String(r[18]).trim() : '',
+                ];
+                const ass = [
+                  r[20] !== undefined ? String(r[20]).trim() : '',
+                  r[21] !== undefined ? String(r[21]).trim() : '',
+                  r[22] !== undefined ? String(r[22]).trim() : '',
+                  r[23] !== undefined ? String(r[23]).trim() : '',
+                ];
+                const exam = r[25] !== undefined ? String(r[25]).trim() : '';
+
+                rows.push({
+                  name: r[1] ? String(r[1]).trim() : '',
+                  absence,
+                  hw,
+                  ass,
+                  exam,
+                });
+              }
+
+              if (sIdx === 1) {
+                state.tab1Dates = dates;
+                state.tab1Rows = rows;
+              } else {
+                state.tab2Dates = dates;
+                state.tab2Rows = rows;
+              }
+            }
+          });
+
+          scheduleAutoSave();
+          renderAppView();
+          showToast('تم استيراد كافة البيانات بنجاح واستعادتها كاملة!', 'success');
+        } catch (err) {
+          showToast('حدث خطأ أثناء قراءة ملف الإكسل: ' + err.message, 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      e.target.value = '';
+    }
+
+    /* ==========================================================================
+       8. Initial Application Startup
+       ========================================================================== */
+    async function initApp() {
+      try {
+        const resp = await fetch('/api/data', { cache: 'no-store' });
+        if (resp.ok) {
+          const data = await resp.json();
+          state.isFolderServerMode = true;
+          if (data && (data.classesData || data.globalSettings)) {
+            state.masterDb = data;
+            const g = data.globalSettings;
+            if (g) {
+              if (g.adminSchool) state.adminSchool = g.adminSchool;
+              if (g.teacher) state.teacher = g.teacher;
+              if (g.subject) state.subject = g.subject;
+              if (g.year) state.year = g.year;
+              if (g.pageSize) state.pageSize = g.pageSize;
+              if (g.customClasses) state.customClasses = g.customClasses;
+              const initTerm = g.lastTerm || sysInit.term;
+              const initClass = g.lastClass || 'اول 1';
+              state.term = initTerm;
+              state.currentClass = initClass;
+              loadClassData(initTerm, initClass, g.pageSize || 25);
+              updateTopBarLabels();
+              renderAppView();
+              showToast('تم الاتصال بمجلد البرنامج بنجاح! يتم الحفظ تلقائياً في ملف database.json', 'success');
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Folder API check:', e);
+      }
+
+      state.isFolderServerMode = false;
+      loadClassData(sysInit.term, 'اول 1', 25);
+      updateTopBarLabels();
+      renderAppView();
+    }
+
+    // Launch application on DOM ready
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
