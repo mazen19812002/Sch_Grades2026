@@ -576,6 +576,14 @@
       transition: all 0.3s ease;
     }
 
+    /* Server/Desktop only action buttons - hidden in local mode */
+    .server-only-btn {
+      display: none !important;
+    }
+    body.folder-server-mode .server-only-btn {
+      display: inline-flex !important;
+    }
+
     /* Print CSS - Strict A4 Single Page Containment */
     @media print {
       @page {
@@ -807,10 +815,10 @@
       <button type="button" class="btn-action btn-export" onclick="handleExcelExport()" title="تصدير كشف إكسل كامل بجميع التبويبات">
         📤 تصدير إكسل
       </button>
-      <button type="button" class="btn-action btn-save-folder" onclick="handleForceSaveToFolder()" title="حفظ فوري في ملف database.json داخل الفولدر">
+      <button type="button" class="btn-action btn-save-folder server-only-btn" onclick="handleForceSaveToFolder()" title="حفظ فوري في ملف database.json داخل الفولدر">
         💾 حفظ بالفولدر
       </button>
-      <button type="button" class="btn-action btn-open-folder" onclick="handleOpenAppFolder()" title="فتح مجلد البرنامج والبيانات">
+      <button type="button" class="btn-action btn-open-folder server-only-btn" onclick="handleOpenAppFolder()" title="فتح مجلد البرنامج والبيانات">
         📁 مجلد البرنامج
       </button>
       <button type="button" class="btn-action btn-backup" onclick="handleCreateDatabaseBackup()" title="إنشاء وتنزيل نسخة احتياطية من ملف قاعدة البيانات (database.json)">
@@ -826,7 +834,7 @@
       <button type="button" class="btn-action btn-print" onclick="handleTriggerPrint()" title="طباعة النموذج النشط">
         🖨️ طباعة الكشوف
       </button>
-      <button type="button" class="btn-action btn-clear" onclick="handleExitApplication()" title="حفظ البيانات وإغلاق البرنامج">
+      <button type="button" class="btn-action btn-clear server-only-btn" onclick="handleExitApplication()" title="حفظ البيانات وإغلاق البرنامج">
         🚪 خروج
       </button>
     </div>
@@ -912,7 +920,7 @@
       currentClass: 'اول 1',
       customClasses: [],
       pageSize: 25,
-      activeTab: sysInit.defaultTab,
+      activeTab: 0,
       isEditModeUnlocked: true,
       hiddenUI: false,
       zoom: 1,
@@ -1304,21 +1312,17 @@
       const defaultClasses = ['اول 1', 'اول 2', 'ثاني 1', 'ثاني 2', 'ثالث 1', 'ثالث 2'];
       const allClasses = Array.from(new Set([...defaultClasses, ...state.customClasses]));
 
-      const monthName =
-        tabIndex === 1
-          ? (state.term === 'الاول' ? 'أكتوبر' : 'مارس')
-          : tabIndex === 2
-          ? (state.term === 'الاول' ? 'نوفمبر' : 'أبريل')
-          : '';
+      let optionsHtml = '';
+      allClasses.forEach(cls => {
+        optionsHtml += `<option value="${cls}" ${state.currentClass === cls ? 'selected' : ''}>${cls}</option>`;
+      });
+      optionsHtml += `<option value="__custom__">+ إضافة فصل جديد...</option>`;
+
+      const month1Label = state.term === 'الاول' ? 'شهر أكتوبر' : 'شهر مارس';
+      const month2Label = state.term === 'الاول' ? 'شهر نوفمبر' : 'شهر أبريل';
 
       let classSelectOrBadge = '';
       if (tabIndex === 0) {
-        let optionsHtml = '';
-        allClasses.forEach(cls => {
-          optionsHtml += `<option value="${cls}" ${state.currentClass === cls ? 'selected' : ''}>${cls}</option>`;
-        });
-        optionsHtml += `<option value="__custom__">+ إضافة فصل جديد...</option>`;
-
         classSelectOrBadge = `
           <div class="header-item">
             <label>فصل (تحديد البيانات):</label>
@@ -1331,11 +1335,16 @@
         classSelectOrBadge = `
           <div class="header-item">
             <label>الشهر:</label>
-            <input type="text" class="static-header-val" value="${monthName}" readonly style="background: #e0f2fe; text-align: center;" />
+            <select class="header-month-select" onchange="switchTab(parseInt(this.value))">
+              <option value="1" ${tabIndex === 1 ? 'selected' : ''}>${month1Label}</option>
+              <option value="2" ${tabIndex === 2 ? 'selected' : ''}>${month2Label}</option>
+            </select>
           </div>
           <div class="header-item">
-            <label>الفصل المختار:</label>
-            <input type="text" class="static-header-val" value="${state.currentClass}" readonly style="background: #e0f2fe; text-align: center;" />
+            <label>فصل (تحديد البيانات):</label>
+            <select class="header-class-name" onchange="handleClassChange(this.value)">
+              ${optionsHtml}
+            </select>
           </div>
         `;
       }
@@ -1382,9 +1391,11 @@
       let subGroupContent = '';
       if (tabIndex === 0) {
         subGroupContent = `
-          <span class="autosave-badge" id="storage-mode-badge" style="background: ${state.isFolderServerMode ? '#d1fae5' : '#fef3c7'}; color: ${state.isFolderServerMode ? '#065f46' : '#92400e'}; font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 700;">
-            ${state.isFolderServerMode ? '🟢 حفظ دائم بالفولدر (database.json)' : '🟡 وضع المتصفح المباشر'}
-          </span>
+          ${state.isFolderServerMode ? `
+            <span class="autosave-badge" id="storage-mode-badge" style="background: #d1fae5; color: #065f46; font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 700;">
+              🟢 حفظ دائم بالفولدر (database.json)
+            </span>
+          ` : ''}
           <span class="autosave-badge" id="autosave-status">${state.autosaveStatus}</span>
           <button type="button" class="btn-action btn-clear" style="padding: 3px 8px; font-size: 11px;" onclick="handleClearClassData()">
             مسح بيانات الفصل
@@ -2793,6 +2804,7 @@
         if (resp.ok) {
           const data = await resp.json();
           state.isFolderServerMode = true;
+          document.body.classList.add('folder-server-mode');
           if (data && (data.classesData || data.globalSettings)) {
             state.masterDb = data;
             const g = data.globalSettings;
@@ -2808,7 +2820,7 @@
               state.term = initTerm;
               state.currentClass = initClass;
               loadClassData(initTerm, initClass, g.pageSize || 25);
-              switchTab(sysInit.defaultTab);
+              switchTab(0);
               showToast('تم الاتصال بمجلد البرنامج بنجاح! يتم الحفظ تلقائياً في ملف database.json', 'success');
               return;
             }
@@ -2819,8 +2831,9 @@
       }
 
       state.isFolderServerMode = false;
+      document.body.classList.remove('folder-server-mode');
       loadClassData(sysInit.term, 'اول 1', 25);
-      switchTab(sysInit.defaultTab);
+      switchTab(0);
     }
 
     // Launch application on DOM ready
