@@ -1229,9 +1229,13 @@
       const startYear = parseInt(normalizeArabicDigits(yearStr || state.year || '').split('-')[0]) || new Date().getFullYear();
       const nextYear = startYear + 1;
       if (term === "الاول") {
-        return { min: startYear + "-09-01", max: startYear + "-12-31" };
+        const monthNum = tabIndex === 1 ? 10 : 11;
+        const name = tabIndex === 1 ? 'أكتوبر' : 'نوفمبر';
+        return { min: startYear + "-09-01", max: startYear + "-12-31", monthNum, name, year: startYear };
       } else {
-        return { min: nextYear + "-02-01", max: nextYear + "-05-31" };
+        const monthNum = tabIndex === 1 ? 3 : 4;
+        const name = tabIndex === 1 ? 'مارس' : 'أبريل';
+        return { min: nextYear + "-02-01", max: nextYear + "-05-31", monthNum, name, year: nextYear };
       }
     }
 
@@ -2400,16 +2404,42 @@
       openCustomDatePicker(tabIndex, colIdx);
     }
 
-    function openCustomDatePicker(tabIndex, colIdx) {
-      activeDatePickerInfo = { tabIndex, colIdx };
-      const modal = document.getElementById('custom-datepicker-modal');
-      if (!modal) return;
-
+    function openCustomDatePicker(tabIndex, colIdx, overrideMonthNum, overrideYear) {
       const dates = tabIndex === 1 ? state.tab1Dates : state.tab2Dates;
       const currentDateVal = dates[colIdx] || '';
-      const dateLimits = getDateLimitsForTab(state.term, state.year, tabIndex);
       const colMinDate = getMinDateForColumn(dates, colIdx);
       const allowedDays = getClassAttendanceDays(state.currentClass);
+
+      const startYear = parseInt(normalizeArabicDigits(state.year || '').split('-')[0]) || new Date().getFullYear();
+      const nextYear = startYear + 1;
+      const termMonths = getTermMonths(state.term, state.year);
+
+      // تحديد الشهر والسنة النشطين في أداة التقويم:
+      // أكتوبر هو شهر 10، نوفمبر هو شهر 11 في الترم الأول
+      // مارس هو شهر 3، أبريل هو شهر 4 في الترم الثاني
+      let activeMonthNum;
+      let activeYear;
+
+      if (overrideMonthNum !== undefined && overrideMonthNum !== null) {
+        activeMonthNum = overrideMonthNum;
+        activeYear = overrideYear || (state.term === 'الاول' ? startYear : nextYear);
+      } else if (currentDateVal && /^\d{4}-\d{2}-\d{2}$/.test(currentDateVal.trim())) {
+        const parts = currentDateVal.trim().split('-');
+        activeYear = parseInt(parts[0], 10);
+        activeMonthNum = parseInt(parts[1], 10);
+      } else {
+        if (state.term === 'الاول') {
+          activeMonthNum = tabIndex === 1 ? 10 : 11; // تبويب 1 = أكتوبر (10)، تبويب 2 = نوفمبر (11)
+          activeYear = startYear;
+        } else {
+          activeMonthNum = tabIndex === 1 ? 3 : 4;   // تبويب 1 = مارس (3)، تبويب 2 = أبريل (4)
+          activeYear = nextYear;
+        }
+      }
+
+      activeDatePickerInfo = { tabIndex, colIdx, activeMonthNum, activeYear };
+      const modal = document.getElementById('custom-datepicker-modal');
+      if (!modal) return;
 
       const dayNamesMap = {
         0: 'الأحد',
@@ -2419,26 +2449,85 @@
         4: 'الخميس'
       };
 
-      const monthName = tabIndex === 1
-        ? (state.term === 'الاول' ? 'أكتوبر' : 'مارس')
-        : (state.term === 'الاول' ? 'نوفمبر' : 'أبريل');
+      const monthNamesMap = {
+        9: 'سبتمبر',
+        10: 'أكتوبر',
+        11: 'نوفمبر',
+        12: 'ديسمبر',
+        2: 'فبراير',
+        3: 'مارس',
+        4: 'أبريل',
+        5: 'مايو'
+      };
+
+      const currentMonthName = monthNamesMap[activeMonthNum] || `شهر ${activeMonthNum}`;
 
       const titleEl = document.getElementById('cdp-title');
-      if (titleEl) titleEl.innerText = `اختيار تاريخ اليوم ${colIdx + 1} (${monthName})`;
-
-      const subtitleEl = document.getElementById('cdp-subtitle');
-      if (subtitleEl) subtitleEl.innerText = `فصل: ${state.currentClass} | الأيام المعروضة هي أيام حصص الفصل المحددة فقط`;
-
-      if (!dateLimits.min || !dateLimits.max) {
-        showToast('تعذر تحديد مدى تواريخ هذا الشهر.', 'warning');
-        return;
+      if (titleEl) {
+        titleEl.innerText = `اختيار تاريخ اليوم ${colIdx + 1} (${currentMonthName} - شهر ${activeMonthNum})`;
       }
 
-      const startParts = dateLimits.min.split('-');
-      const endParts = dateLimits.max.split('-');
-      const year = parseInt(startParts[0], 10);
-      const month = parseInt(startParts[1], 10);
-      const endDay = parseInt(endParts[2], 10);
+      const subtitleEl = document.getElementById('cdp-subtitle');
+      if (subtitleEl) {
+        subtitleEl.innerText = `فصل: ${state.currentClass} | أيام حصص الفصل المحددة | عام: ${activeYear}`;
+      }
+
+      // شريط التنقل بين أشهر الترم
+      const monthsBarEl = document.getElementById('cdp-months-bar');
+      if (monthsBarEl) {
+        const currentMonthIdx = termMonths.findIndex(m => m.monthNum === activeMonthNum);
+        const prevMonth = currentMonthIdx > 0 ? termMonths[currentMonthIdx - 1] : null;
+        const nextMonth = currentMonthIdx >= 0 && currentMonthIdx < termMonths.length - 1 ? termMonths[currentMonthIdx + 1] : null;
+
+        let pillsHtml = '';
+        termMonths.forEach(m => {
+          const isActive = m.monthNum === activeMonthNum;
+          pillsHtml += `
+            <button
+              type="button"
+              class="cdp-month-pill ${isActive ? 'active' : ''}"
+              onclick="changeCustomPickerMonth(${m.monthNum}, ${m.year})"
+              title="عرض أيام ${m.name} (شهر ${m.monthNum})"
+            >
+              ${m.name} (${m.monthNum})
+            </button>
+          `;
+        });
+
+        monthsBarEl.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span class="cdp-month-selector-title">🗓️ شهر العرض:</span>
+              <div class="cdp-month-pills">
+                ${pillsHtml}
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button
+                type="button"
+                class="btn-action"
+                style="padding: 3px 8px; font-size: 11px;"
+                ${prevMonth ? `onclick="changeCustomPickerMonth(${prevMonth.monthNum}, ${prevMonth.year})"` : 'disabled style="opacity: 0.4; cursor: not-allowed; padding: 3px 8px; font-size: 11px;"'}
+                title="${prevMonth ? `الشهر السابق (${prevMonth.name})` : 'لا يوجد شهر سابق'}"
+              >
+                ▶ ${prevMonth ? prevMonth.name : 'السابق'}
+              </button>
+              <button
+                type="button"
+                class="btn-action"
+                style="padding: 3px 8px; font-size: 11px;"
+                ${nextMonth ? `onclick="changeCustomPickerMonth(${nextMonth.monthNum}, ${nextMonth.year})"` : 'disabled style="opacity: 0.4; cursor: not-allowed; padding: 3px 8px; font-size: 11px;"'}
+                title="${nextMonth ? `الشهر التالي (${nextMonth.name})` : 'لا يوجد شهر تالي'}"
+              >
+                ${nextMonth ? nextMonth.name : 'التالي'} ◀
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      // حساب عدد أيام الشهر المحدد بدقة
+      const daysInMonth = new Date(activeYear, activeMonthNum, 0).getDate();
 
       const dayColumns = {};
       allowedDays.forEach(dIdx => {
@@ -2447,15 +2536,15 @@
         }
       });
 
-      for (let day = 1; day <= endDay; day++) {
-        const d = new Date(year, month - 1, day);
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(activeYear, activeMonthNum - 1, day);
         const dayOfWeek = d.getDay();
 
         // الأيام غير المختارة لا تظهر في Datepicker نهائياً
         if (!allowedDays.includes(dayOfWeek)) continue;
         if (dayOfWeek === 5 || dayOfWeek === 6) continue;
 
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateStr = `${activeYear}-${String(activeMonthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isPastMin = colMinDate ? (dateStr < colMinDate) : false;
         const isCurrent = (dateStr === currentDateVal);
 
@@ -2465,7 +2554,7 @@
             dateStr,
             isPastMin,
             isCurrent,
-            label: `${day} / ${month}`
+            label: `${day} / ${activeMonthNum}`
           });
         }
       }
@@ -2495,7 +2584,7 @@
           <div class="datepicker-day-col">
             <div class="datepicker-day-title">${dayTitle}</div>
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              ${buttonsHtml.length > 0 ? buttonsHtml : '<span style="font-size: 11px; color: #94a3b8; text-align: center; padding: 10px 0;">لا توجد تواريخ</span>'}
+              ${buttonsHtml.length > 0 ? buttonsHtml : '<span style="font-size: 11px; color: #94a3b8; text-align: center; padding: 10px 0;">لا توجد حصص</span>'}
             </div>
           </div>
         `;
@@ -2510,6 +2599,11 @@
       }
 
       modal.style.display = 'flex';
+    }
+
+    function changeCustomPickerMonth(monthNum, year) {
+      if (!activeDatePickerInfo) return;
+      openCustomDatePicker(activeDatePickerInfo.tabIndex, activeDatePickerInfo.colIdx, monthNum, year);
     }
 
     function selectCustomPickerDate(dateStr) {
